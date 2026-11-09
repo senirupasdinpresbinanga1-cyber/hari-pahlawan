@@ -194,7 +194,6 @@
       ]
     };
 
-    // STATE GAME LOKAL
     let currentGrade = 1;
     let currentQuestions = [];
     let currentQIdx = 0;
@@ -209,28 +208,29 @@
       { id: 4, name: '', score: 0, answered: false, currentShuffledOpts: [] }
     ];
 
-    let rosterData = {
-      Kelas_1: ["Ahmad", "Budi", "Citra", "Dewi", "Eko"],
-      Kelas_2: ["Fani", "Gani", "Hani", "Indra", "Jaka"],
-      Kelas_3: ["Kiki", "Lala", "Mona", "Niko", "Oki"],
-      Kelas_4: ["Putri", "Qori", "Rian", "Siti", "Tono"],
-      Kelas_5: ["Umar", "Vina", "Wawan", "Xena", "Yoga"],
-      Kelas_6: ["Zahra", "Adit", "Bella", "Candra", "Dion"]
-    };
+    let rosterData = { Kelas_1: [], Kelas_2: [], Kelas_3: [], Kelas_4: [], Kelas_5: [], Kelas_6: [] };
 
-    document.addEventListener('DOMContentLoaded', () => {
-      loadCachedRoster();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await fetchRosterFromGoogleSheet();
       selectGrade(1);
     });
 
-    function loadCachedRoster() {
-      const cached = localStorage.getItem('OFFLINE_ROSTER');
-      if (cached) {
-        try {
-          rosterData = JSON.parse(cached);
-          document.getElementById('syncStatus').innerText = "Database Local Cache Loaded";
+    async function fetchRosterFromGoogleSheet() {
+      const url = localStorage.getItem('GAS_API_URL');
+      if (!url) {
+        document.getElementById('syncStatus').innerText = "URL GAS Belum Diset";
+        return;
+      }
+      try {
+        const res = await fetch(`${url}?action=getRoster`);
+        const json = await res.json();
+        if (json.status === 'success') {
+          rosterData = json.data;
+          document.getElementById('syncStatus').innerText = "Terhubung & Tersaring (Sheet Nilai)";
           document.getElementById('syncStatus').className = "text-xs px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800";
-        } catch(e){}
+        }
+      } catch(e) {
+        console.error("Gagal ambil roster:", e);
       }
     }
 
@@ -243,7 +243,7 @@
       return array;
     }
 
-    function selectGrade(grade) {
+    async function selectGrade(grade) {
       currentGrade = grade;
       document.querySelectorAll('.grade-btn').forEach((btn, idx) => {
         if ((idx + 1) === grade) {
@@ -253,25 +253,40 @@
         }
       });
 
-      const names = rosterData["Kelas_" + grade] || ["Siswa 1", "Siswa 2", "Siswa 3", "Siswa 4"];
+      // Refresh roster data terbaru agar siswa yang baru masuk sheet Nilai langsung hilang dari pilihan
+      await fetchRosterFromGoogleSheet();
+
+      const names = rosterData["Kelas_" + grade] || [];
       for (let p = 1; p <= 4; p++) {
         const sel = document.getElementById(`p${p}Select`);
         sel.innerHTML = '';
-        names.forEach((n, idx) => {
+        if (names.length === 0) {
           const opt = document.createElement('option');
-          opt.value = n;
-          opt.textContent = n;
-          if (idx === (p - 1)) opt.selected = true;
+          opt.value = "";
+          opt.textContent = "Semua siswa sudah selesai bermain!";
           sel.appendChild(opt);
-        });
+        } else {
+          names.forEach((n, idx) => {
+            const opt = document.createElement('option');
+            opt.value = n;
+            opt.textContent = n;
+            if (idx === (p - 1)) opt.selected = true;
+            sel.appendChild(opt);
+          });
+        }
       }
     }
 
     function startMatch() {
-      players[0].name = document.getElementById('p1Select').value || "Pemain 1";
-      players[1].name = document.getElementById('p2Select').value || "Pemain 2";
-      players[2].name = document.getElementById('p3Select').value || "Pemain 3";
-      players[3].name = document.getElementById('p4Select').value || "Pemain 4";
+      players[0].name = document.getElementById('p1Select').value;
+      players[1].name = document.getElementById('p2Select').value;
+      players[2].name = document.getElementById('p3Select').value;
+      players[3].name = document.getElementById('p4Select').value;
+
+      if (!players[0].name || players[0].name.includes("selesai")) {
+        alert("Pilih siswa yang valid terlebih dahulu!");
+        return;
+      }
 
       players.forEach(p => { p.score = 0; p.answered = false; });
       currentQuestions = QUESTION_BANK[currentGrade] || QUESTION_BANK[1];
@@ -298,7 +313,6 @@
         p.answered = false;
         document.getElementById(`p${p.id}Score`).innerText = `Skor: ${p.score}`;
         
-        // PENGACAKAN PILIHAN JAWABAN SECARA INDEPENDEN PER PEMAIN
         p.currentShuffledOpts = shuffleArray(q.opts);
 
         const container = document.getElementById(`p${p.id}Opts`);
@@ -341,7 +355,6 @@
       const q = currentQuestions[currentQIdx];
       const isCorrect = (chosenText === q.a);
 
-      // Lock & Highlight Tombol Jawaban Pemain Ini
       const container = document.getElementById(`p${playerNum}Opts`);
       const btns = container.querySelectorAll('button');
       
@@ -358,11 +371,10 @@
       });
 
       if (isCorrect) {
-        p.score += 20 + timeLeft; // Bonus kecepatan
+        p.score += 20 + timeLeft;
         document.getElementById(`p${playerNum}Score`).innerText = `Skor: ${p.score}`;
       }
 
-      // Jika ke-4 pemain sudah menjawab, lanjut otomatis ke soal berikutnya
       if (players.every(pl => pl.answered)) {
         clearInterval(timerInterval);
         setTimeout(nextQuestion, 1200);
@@ -429,10 +441,11 @@
       }
     }
 
-    function resetToSetup() {
+    async function resetToSetup() {
       document.getElementById('resultPanel').classList.add('hidden');
       document.getElementById('arenaPanel').classList.add('hidden');
       document.getElementById('setupPanel').classList.remove('hidden');
+      await selectGrade(currentGrade);
     }
   </script>
 </body>
