@@ -16,10 +16,10 @@
 <body class="bg-slate-950 text-white font-sans min-h-screen overflow-x-hidden select-none">
 
   <!-- TOP BAR -->
-  <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center">
+  <header class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center">
     <div class="flex items-center space-x-3">
-      <div class="bg-red-600 text-white font-black px-3 py-1 rounded text-xl shadow-lg border border-red-400">10 NOV</div>
-      <h1 class="text-xl font-extrabold tracking-wide text-amber-400">ARENA KUIS HARI PAHLAWAN</h1>
+      <div class="bg-red-600 text-white font-black px-3 py-1 rounded text-lg shadow-lg border border-red-400">10 NOV</div>
+      <h1 class="text-lg font-extrabold tracking-wide text-amber-400">ARENA KUIS HARI PAHLAWAN</h1>
     </div>
     <div class="flex items-center gap-3">
       <span id="syncStatus" class="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline Mode</span>
@@ -27,7 +27,7 @@
     </div>
   </header>
 
-  <main class="p-4 max-w-7xl mx-auto">
+  <main class="p-4 max-w-[1600px] mx-auto">
     <!-- PANEL SELEKSI KELAS & PEMAIN -->
     <section id="setupPanel" class="bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-6 shadow-2xl">
       <div>
@@ -45,24 +45,24 @@
       <div>
         <h2 class="text-lg font-bold text-amber-400 mb-3">2. Pilih 4 Siswa yang Maju ke Depan</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- P1 -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-red-500/30 space-y-2">
-            <span class="text-xs font-bold text-red-400">PEMAIN 1 (ZONA MERAH)</span>
+          <!-- P1 MERAH -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-red-500/40 space-y-2">
+            <span class="text-xs font-bold text-red-400">PEMAIN 1 (MERAH)</span>
             <select id="p1Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-red-500 focus:outline-none"></select>
           </div>
-          <!-- P2 -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-blue-500/30 space-y-2">
-            <span class="text-xs font-bold text-blue-400">PEMAIN 2 (ZONA BIRU)</span>
+          <!-- P2 BIRU -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-blue-500/40 space-y-2">
+            <span class="text-xs font-bold text-blue-400">PEMAIN 2 (BIRU)</span>
             <select id="p2Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-blue-500 focus:outline-none"></select>
           </div>
-          <!-- P3 -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-emerald-500/30 space-y-2">
-            <span class="text-xs font-bold text-emerald-400">PEMAIN 3 (ZONA HIJAU)</span>
+          <!-- P3 HIJAU -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-emerald-500/40 space-y-2">
+            <span class="text-xs font-bold text-emerald-400">PEMAIN 3 (HIJAU)</span>
             <select id="p3Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"></select>
           </div>
-          <!-- P4 -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-amber-500/30 space-y-2">
-            <span class="text-xs font-bold text-amber-400">PEMAIN 4 (ZONA KUNING)</span>
+          <!-- P4 KUNING -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-amber-500/40 space-y-2">
+            <span class="text-xs font-bold text-amber-400">PEMAIN 4 (KUNING)</span>
             <select id="p4Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-amber-500 focus:outline-none"></select>
           </div>
         </div>
@@ -75,12 +75,12 @@
       </div>
     </section>
 
-    <!-- ARENA 4 PEMAIN -->
+    <!-- ARENA 4 PEMAIN (LAYOUT 1 BARIS SEJAJAR: MERAH | BIRU | HIJAU | KUNING) -->
     <section id="arenaPanel" class="hidden space-y-4">
-      <div class="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800">
+      <div class="flex justify-between items-center bg-slate-900 px-6 py-3 rounded-xl border border-slate-800">
         <div>
           <span class="text-xs text-slate-400">SOAL KE</span>
-          <div id="questionNum" class="text-xl font-bold text-amber-400">1 / 5</div>
+          <div id="questionNum" class="text-xl font-bold text-amber-400">1 / 4</div>
         </div>
         <div class="text-center">
           <span class="text-xs text-slate-400">WAKTU TERSISA</span>
@@ -90,55 +90,57 @@
       </div>
 
       <!-- TAMPILAN SOAL UTAMA -->
-      <div class="bg-slate-900 p-6 rounded-2xl border border-amber-500/30 text-center shadow-xl">
+      <div class="bg-slate-900 p-5 rounded-2xl border border-amber-500/30 text-center shadow-xl">
         <h3 id="questionText" class="text-xl md:text-2xl font-black text-white">Soal akan muncul di sini...</h3>
       </div>
 
-      <!-- 4 ZONA PEMAIN -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- PLAYER 1 -->
-        <div class="p1-card bg-slate-900 rounded-xl p-4 border-2 border-red-500/40 space-y-3">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span id="p1Name" class="font-bold text-red-400">Pemain 1</span>
-            <span id="p1Score" class="font-extrabold bg-red-950/80 px-3 py-1 rounded border border-red-800 text-red-200">Skor: 0</span>
+      <!-- 4 ZONA PEMAIN SEJAJAR 1 BARIS -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        
+        <!-- PLAYER 1 (MERAH) -->
+        <div class="bg-slate-900 rounded-xl p-3 border-2 border-red-500/50 space-y-3 flex flex-col justify-between">
+          <div class="flex justify-between items-center border-b border-red-900/40 pb-2">
+            <span id="p1Name" class="font-bold text-red-400 truncate max-w-[110px]">Pemain 1</span>
+            <span id="p1Score" class="font-extrabold bg-red-950/80 px-2 py-0.5 rounded border border-red-800 text-xs text-red-200">Skor: 0</span>
           </div>
-          <div id="p1Opts" class="grid grid-cols-2 gap-2"></div>
+          <div id="p1Opts" class="flex flex-col gap-2"></div>
         </div>
 
-        <!-- PLAYER 2 -->
-        <div class="p2-card bg-slate-900 rounded-xl p-4 border-2 border-blue-500/40 space-y-3">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span id="p2Name" class="font-bold text-blue-400">Pemain 2</span>
-            <span id="p2Score" class="font-extrabold bg-blue-950/80 px-3 py-1 rounded border border-blue-800 text-blue-200">Skor: 0</span>
+        <!-- PLAYER 2 (BIRU) -->
+        <div class="bg-slate-900 rounded-xl p-3 border-2 border-blue-500/50 space-y-3 flex flex-col justify-between">
+          <div class="flex justify-between items-center border-b border-blue-900/40 pb-2">
+            <span id="p2Name" class="font-bold text-blue-400 truncate max-w-[110px]">Pemain 2</span>
+            <span id="p2Score" class="font-extrabold bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800 text-xs text-blue-200">Skor: 0</span>
           </div>
-          <div id="p2Opts" class="grid grid-cols-2 gap-2"></div>
+          <div id="p2Opts" class="flex flex-col gap-2"></div>
         </div>
 
-        <!-- PLAYER 3 -->
-        <div class="p3-card bg-slate-900 rounded-xl p-4 border-2 border-emerald-500/40 space-y-3">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span id="p3Name" class="font-bold text-emerald-400">Pemain 3</span>
-            <span id="p3Score" class="font-extrabold bg-emerald-950/80 px-3 py-1 rounded border border-emerald-800 text-emerald-200">Skor: 0</span>
+        <!-- PLAYER 3 (HIJAU) -->
+        <div class="bg-slate-900 rounded-xl p-3 border-2 border-emerald-500/50 space-y-3 flex flex-col justify-between">
+          <div class="flex justify-between items-center border-b border-emerald-900/40 pb-2">
+            <span id="p3Name" class="font-bold text-emerald-400 truncate max-w-[110px]">Pemain 3</span>
+            <span id="p3Score" class="font-extrabold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 text-xs text-emerald-200">Skor: 0</span>
           </div>
-          <div id="p3Opts" class="grid grid-cols-2 gap-2"></div>
+          <div id="p3Opts" class="flex flex-col gap-2"></div>
         </div>
 
-        <!-- PLAYER 4 -->
-        <div class="p4-card bg-slate-900 rounded-xl p-4 border-2 border-amber-500/40 space-y-3">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span id="p4Name" class="font-bold text-amber-400">Pemain 4</span>
-            <span id="p4Score" class="font-extrabold bg-amber-950/80 px-3 py-1 rounded border border-amber-800 text-amber-200">Skor: 0</span>
+        <!-- PLAYER 4 (KUNING) -->
+        <div class="bg-slate-900 rounded-xl p-3 border-2 border-amber-500/50 space-y-3 flex flex-col justify-between">
+          <div class="flex justify-between items-center border-b border-amber-900/40 pb-2">
+            <span id="p4Name" class="font-bold text-amber-400 truncate max-w-[110px]">Pemain 4</span>
+            <span id="p4Score" class="font-extrabold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800 text-xs text-amber-200">Skor: 0</span>
           </div>
-          <div id="p4Opts" class="grid grid-cols-2 gap-2"></div>
+          <div id="p4Opts" class="flex flex-col gap-2"></div>
         </div>
+
       </div>
     </section>
 
-    <!-- REKAP REKAPITULASI SESI (HASIL AKHIR) -->
+    <!-- REKAP HASIL AKHIR SESI -->
     <section id="resultPanel" class="hidden bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-6">
       <div class="text-center space-y-2">
         <h2 class="text-3xl font-black text-amber-400">HASIL PERTANDINGAN</h2>
-        <p class="text-xs text-slate-400">Skor telah dikirim otomatis ke Google Sheet "Nilai"</p>
+        <p class="text-xs text-slate-400">Skor telah tersimpan otomatis ke Google Sheet "Nilai"</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="leaderboardGrid"></div>
@@ -152,37 +154,43 @@
   </main>
 
   <script>
-    // BANK SOAL TERSTRUKTUR KELAS 1 - 6
+    // BANK SOAL (4 SOAL PER KELAS)
     const QUESTION_BANK = {
       1: [
-        { q: "Hari Pahlawan diperingati setiap tanggal?", opts: ["10 November", "17 Agustus", "25 Desember", "1 Mei"], a: 0 },
-        { q: "Warna bendera negara Indonesia adalah?", opts: ["Merah Putih", "Hijau Kuning", "Biru Putih", "Merah Hitam"], a: 0 },
-        { q: "Pahlawan yang memimpin pertempuran Surabaya adalah?", opts: ["Bung Tomo", "Ir. Soekarno", "R.A. Kartini", "Jenderal Sudirman"], a: 0 }
+        { q: "Hari Pahlawan diperingati setiap tanggal?", opts: ["10 November", "17 Agustus", "25 Desember", "1 Mei"], a: "10 November" },
+        { q: "Warna bendera negara Indonesia adalah?", opts: ["Merah Putih", "Hijau Kuning", "Biru Putih", "Merah Hitam"], a: "Merah Putih" },
+        { q: "Tokoh pemuda pembakar semangat rakyat Surabaya adalah?", opts: ["Bung Tomo", "Ir. Soekarno", "R.A. Kartini", "Jenderal Sudirman"], a: "Bung Tomo" },
+        { q: "Sikap yang menyerminkan seorang pahlawan adalah?", opts: ["Suka Menolong", "Suka Berkelahi", "Malas Belajar", "Pemberani tapi Jahat"], a: "Suka Menolong" }
       ],
       2: [
-        { q: "Pahlawan wanita yang memperjuangkan hak pendidikan wanita adalah?", opts: ["R.A. Kartini", "Cut Nyak Dien", "Dewi Sartika", "Fatmawati"], a: 0 },
-        { q: "Kota yang dijuluki Kota Pahlawan adalah?", opts: ["Surabaya", "Jakarta", "Bandung", "Semarang"], a: 0 },
-        { q: "Bung Tomo membakar semangat pemuda dengan seruan?", opts: ["Merdeka atau Mati!", "Maju Terus!", "Pantang Menyerah!", "Bersatu Kita Teguh!"], a: 0 }
+        { q: "Pahlawan wanita yang memperjuangkan pendidikan wanita adalah?", opts: ["R.A. Kartini", "Cut Nyak Dien", "Dewi Sartika", "Fatmawati"], a: "R.A. Kartini" },
+        { q: "Kota yang dijuluki sebagai Kota Pahlawan adalah?", opts: ["Surabaya", "Jakarta", "Bandung", "Semarang"], a: "Surabaya" },
+        { q: "Bung Tomo membakar semangat pemuda dengan seruan?", opts: ["Merdeka atau Mati!", "Maju Terus!", "Pantang Menyerah!", "Bersatu Kita Teguh!"], a: "Merdeka atau Mati!" },
+        { q: "Lagu nasional untuk mengenang pahlawan yang gugur adalah?", opts: ["Gugur Bunga", "Indonesia Raya", "Garuda Pancasila", "Halo-Halo Bandung"], a: "Gugur Bunga" }
       ],
       3: [
-        { q: "Pahlawan dari Maluku yang bergambar di uang Rp 1.000 (kertas lama) adalah?", opts: ["Pattimura", "Pangeran Diponegoro", "Tuanku Imam Bonjol", "Sisingamangaraja"], a: 0 },
-        { q: "Pahlawan nasional yang merumuskan teks proklamasi bersama Soekarno adalah?", opts: ["Moh. Hatta", "Bung Tomo", "Sutan Sjahrir", "Tan Malaka"], a: 0 },
-        { q: "Senjata tradisional rakyat Indonesia saat melawan penjajah adalah?", opts: ["Bambu Runcing", "Keris", "Rencong", "Mandau"], a: 0 }
+        { q: "Pahlawan dari Maluku yang terdapat pada uang kertas Rp 1.000 (lama) adalah?", opts: ["Pattimura", "Pangeran Diponegoro", "Tuanku Imam Bonjol", "Sisingamangaraja"], a: "Pattimura" },
+        { q: "Pahlawan nasional yang mendampingi Soekarno membaca Proklamasi adalah?", opts: ["Moh. Hatta", "Bung Tomo", "Sutan Sjahrir", "Tan Malaka"], a: "Moh. Hatta" },
+        { q: "Senjata sederhana khas perjuangan rakyat Indonesia adalah?", opts: ["Bambu Runcing", "Keris", "Rencong", "Mandau"], a: "Bambu Runcing" },
+        { q: "Monumen terkenal di Jakarta untuk mengenang perjuangan kemerdekaan adalah?", opts: ["Monas", "Tugu Muda", "Tugu Pahlawan", "Jam Gadang"], a: "Monas" }
       ],
       4: [
-        { q: "Pertempuran Ambarawa dipimpin oleh sosok jenderal besar yaitu?", opts: ["Jenderal Sudirman", "Jenderal Ahmad Yani", "Jenderal Gatot Subroto", "Jenderal Nasution"], a: 0 },
-        { q: "Pahlawan dari Aceh yang memimpin Perang Aceh adalah?", opts: ["Cut Nyak Dien", "R.A. Kartini", "Nyi Ageng Serang", "Martha Christina Tiahahu"], a: 0 },
-        { q: "Perang Diponegoro terjadi di pulau?", opts: ["Jawa", "Sumatera", "Sulawesi", "Kalimantan"], a: 0 }
+        { q: "Pertempuran Ambarawa dipimpin oleh sosok pahlawan besar yaitu?", opts: ["Jenderal Sudirman", "Jenderal Ahmad Yani", "Jenderal Gatot Subroto", "Jenderal Nasution"], a: "Jenderal Sudirman" },
+        { q: "Pahlawan wanita tangguh asal Aceh yang memimpin Perang Aceh adalah?", opts: ["Cut Nyak Dien", "R.A. Kartini", "Nyi Ageng Serang", "Martha Christina Tiahahu"], a: "Cut Nyak Dien" },
+        { q: "Perang Diponegoro melawan penjajah Belanda terjadi di pulau?", opts: ["Jawa", "Sumatera", "Sulawesi", "Kalimantan"], a: "Jawa" },
+        { q: "Semboyan Bhinneka Tunggal Ika artinya?", opts: ["Berbeda-beda tetap satu jua", "Bersatu kita teguh", "Pantang menyerah", "Merdeka atau mati"], a: "Berbeda-beda tetap satu jua" }
       ],
       5: [
-        { q: "Organisasi pergerakan nasional pertama yang berdiri tahun 1908 adalah?", opts: ["Budi Utomo", "Sikat Islam", "Indische Partij", "PNI"], a: 0 },
-        { q: "Pengibaran bendera Merah Putih pertama saat Proklamasi disebarkan oleh?", opts: ["Latief Hendraningrat & Suhud", "Bung Tomo", "Sayuti Melik", "Chaerul Saleh"], a: 0 },
-        { q: "Tokoh yang mengetik teks Proklamasi Kemerdekaan Indonesia adalah?", opts: ["Sayuti Melik", "Sukarni", "B.M. Diah", "Wikana"], a: 0 }
+        { q: "Organisasi pergerakan nasional pertama yang berdiri tahun 1908 adalah?", opts: ["Budi Utomo", "Syarikat Islam", "Indische Partij", "PNI"], a: "Budi Utomo" },
+        { q: "Pengibaran bendera Merah Putih pertama saat Proklamasi dilakukan oleh?", opts: ["Latief Hendraningrat & Suhud", "Bung Tomo", "Sayuti Melik", "Chaerul Saleh"], a: "Latief Hendraningrat & Suhud" },
+        { q: "Tokoh pejuang yang bertugas mengetik teks Proklamasi Kemerdekaan adalah?", opts: ["Sayuti Melik", "Sukarni", "B.M. Diah", "Wikana"], a: "Sayuti Melik" },
+        { q: "Pahlawan bertjuluk 'Ayam Jantan dari Timur' dari Maluku/Sulawesi adalah?", opts: ["Sultan Hasanuddin", "Pattimura", "Pangeran Antasari", "Tuanku Imam Bonjol"], a: "Sultan Hasanuddin" }
       ],
       6: [
-        { q: "Peristiwa Insiden Hotel Yamato di Surabaya dipicu oleh aksi tentara Belanda yaitu?", opts: ["Mengibarkan bendera Belanda", "Merobek teks proklamasi", "Menembak pemuda", "Menutup jalan"], a: 0 },
-        { q: "Perjanjian diplomasi pertama antara Indonesia dan Belanda setelah kemerdekaan adalah?", opts: ["Linggarjati", "Renville", "Roem-Royen", "KMB"], a: 0 },
-        { q: "Pahlawan nasional pimpinan Perang Banjar di Kalimantan Selatan adalah?", opts: ["Pangeran Antasari", "Sultan Hasanuddin", "I Gusti Ngurah Rai", "Tuanku Tambusai"], a: 0 }
+        { q: "Peristiwa Insiden Hotel Yamato di Surabaya dipicu oleh aksi Belanda yaitu?", opts: ["Mengibarkan bendera Belanda", "Merobek teks proklamasi", "Menembak pemuda", "Menutup akses jalan"], a: "Mengibarkan bendera Belanda" },
+        { q: "Perjanjian diplomasi pertama antara Indonesia dan Belanda adalah?", opts: ["Linggarjati", "Renville", "Roem-Royen", "KMB"], a: "Linggarjati" },
+        { q: "Pahlawan nasional pimpinan Perang Banjar di Kalimantan Selatan adalah?", opts: ["Pangeran Antasari", "Sultan Hasanuddin", "I Gusti Ngurah Rai", "Tuanku Tambusai"], a: "Pangeran Antasari" },
+        { q: "Pasukan khusus pimpinan I Gusti Ngurah Rai di Bali bernama?", opts: ["Puputan Margarana", "Laskar Rakyat", "PETA", "Heiho"], a: "Puputan Margarana" }
       ]
     };
 
@@ -195,10 +203,10 @@
     let elapsedTotalSeconds = 0;
 
     let players = [
-      { id: 1, name: '', score: 0, answered: false },
-      { id: 2, name: '', score: 0, answered: false },
-      { id: 3, name: '', score: 0, answered: false },
-      { id: 4, name: '', score: 0, answered: false }
+      { id: 1, name: '', score: 0, answered: false, currentShuffledOpts: [] },
+      { id: 2, name: '', score: 0, answered: false, currentShuffledOpts: [] },
+      { id: 3, name: '', score: 0, answered: false, currentShuffledOpts: [] },
+      { id: 4, name: '', score: 0, answered: false, currentShuffledOpts: [] }
     ];
 
     let rosterData = {
@@ -224,6 +232,15 @@
           document.getElementById('syncStatus').className = "text-xs px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800";
         } catch(e){}
       }
+    }
+
+    function shuffleArray(arr) {
+      let array = [...arr];
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
     }
 
     function selectGrade(grade) {
@@ -273,28 +290,28 @@
         return;
       }
 
-      players.forEach(p => {
-        p.answered = false;
-        document.getElementById(`p${p.id}Score`).innerText = `Skor: ${p.score}`;
-      });
-
       const q = currentQuestions[currentQIdx];
       document.getElementById('questionNum').innerText = `${currentQIdx + 1} / ${currentQuestions.length}`;
       document.getElementById('questionText').innerText = q.q;
 
-      for (let p = 1; p <= 4; p++) {
-        document.getElementById(`p${p}Name`).innerText = players[p-1].name;
-        const container = document.getElementById(`p${p}Opts`);
+      players.forEach(p => {
+        p.answered = false;
+        document.getElementById(`p${p.id}Score`).innerText = `Skor: ${p.score}`;
+        
+        // PENGACAKAN PILIHAN JAWABAN SECARA INDEPENDEN PER PEMAIN
+        p.currentShuffledOpts = shuffleArray(q.opts);
+
+        const container = document.getElementById(`p${p.id}Opts`);
         container.innerHTML = '';
 
-        q.opts.forEach((optText, optIdx) => {
+        p.currentShuffledOpts.forEach((optText, optIdx) => {
           const btn = document.createElement('button');
-          btn.className = `p-${p}-btn w-full bg-slate-800 hover:bg-slate-700 text-left p-3 rounded-lg border border-slate-700 text-sm font-semibold transition`;
+          btn.className = `w-full bg-slate-800 hover:bg-slate-700 text-left p-2.5 rounded-lg border border-slate-700 text-xs font-semibold transition hover:border-amber-400`;
           btn.innerText = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
-          btn.onclick = () => submitAnswer(p, optIdx);
+          btn.onclick = () => submitAnswer(p.id, optText, btn);
           container.appendChild(btn);
         });
-      }
+      });
 
       startTimer();
     }
@@ -316,33 +333,36 @@
       }, 1000);
     }
 
-    function submitAnswer(playerNum, choiceIdx) {
+    function submitAnswer(playerNum, chosenText, clickedBtn) {
       const p = players[playerNum - 1];
       if (p.answered) return;
 
       p.answered = true;
       const q = currentQuestions[currentQIdx];
+      const isCorrect = (chosenText === q.a);
 
-      // Disable buttons untuk pemain ini
+      // Lock & Highlight Tombol Jawaban Pemain Ini
       const container = document.getElementById(`p${playerNum}Opts`);
       const btns = container.querySelectorAll('button');
+      
       btns.forEach((btn, idx) => {
         btn.disabled = true;
-        if (idx === q.a) {
-          btn.className = "w-full bg-emerald-600 text-white p-3 rounded-lg font-bold text-sm";
-        } else if (idx === choiceIdx) {
-          btn.className = "w-full bg-red-600 text-white p-3 rounded-lg font-bold text-sm";
+        const optText = p.currentShuffledOpts[idx];
+        if (optText === q.a) {
+          btn.className = "w-full bg-emerald-600 text-white p-2.5 rounded-lg font-bold text-xs shadow-md border border-emerald-400";
+        } else if (btn === clickedBtn && !isCorrect) {
+          btn.className = "w-full bg-red-600 text-white p-2.5 rounded-lg font-bold text-xs shadow-md border border-red-400";
         } else {
-          btn.className = "w-full bg-slate-800 opacity-40 p-3 rounded-lg text-sm";
+          btn.className = "w-full bg-slate-900 opacity-30 p-2.5 rounded-lg text-xs border border-transparent";
         }
       });
 
-      if (choiceIdx === q.a) {
+      if (isCorrect) {
         p.score += 20 + timeLeft; // Bonus kecepatan
         document.getElementById(`p${playerNum}Score`).innerText = `Skor: ${p.score}`;
       }
 
-      // Cek apakah semua 4 pemain sudah menjawab
+      // Jika ke-4 pemain sudah menjawab, lanjut otomatis ke soal berikutnya
       if (players.every(pl => pl.answered)) {
         clearInterval(timerInterval);
         setTimeout(nextQuestion, 1200);
@@ -367,12 +387,11 @@
       const grid = document.getElementById('leaderboardGrid');
       grid.innerHTML = '';
 
-      // Sort Pemenang
       const sorted = [...players].sort((a, b) => b.score - a.score);
 
       sorted.forEach((p, rank) => {
         const card = document.createElement('div');
-        card.className = "bg-slate-800 p-5 rounded-xl border border-slate-700 text-center space-y-2";
+        card.className = "bg-slate-800 p-5 rounded-xl border border-slate-700 text-center space-y-2 shadow-lg";
         card.innerHTML = `
           <div class="text-xs font-bold ${rank === 0 ? 'text-amber-400' : 'text-slate-400'}">JUARA ${rank + 1}</div>
           <div class="text-lg font-black text-white">${p.name}</div>
@@ -381,7 +400,6 @@
         grid.appendChild(card);
       });
 
-      // Kirim Otomatis ke Google Sheet (Nilai)
       await postScoresToSheet();
     }
 
