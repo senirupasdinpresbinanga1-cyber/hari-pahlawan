@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turnamen Hari Pahlawan SD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse-fast {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .animate-pulse-fast { animation: pulse-fast 0.8s infinite; }
+  </style>
+</head>
+<body class="bg-slate-950 text-white font-sans min-h-screen overflow-x-hidden select-none">
+
+  <!-- TOP BAR -->
+  <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <div class="bg-red-600 text-white font-black px-3 py-1 rounded text-xl shadow-lg border border-red-400">10 NOV</div>
+      <h1 class="text-xl font-extrabold tracking-wide text-amber-400">ARENA KUIS HARI PAHLAWAN</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="syncStatus" class="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline Mode</span>
+      <a href="admin.html" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-600 text-amber-300">⚙ Admin Setup</a>
+    </div>
+  </header>
+
+  <main class="p-4 max-w-7xl mx-auto">
+    <!-- PANEL SELEKSI KELAS & PEMAIN -->
+    <section id="setupPanel" class="bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-6 shadow-2xl">
+      <div>
+        <h2 class="text-lg font-bold text-amber-400 mb-3">1. Pilih Tingkat Kelas</h2>
+        <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+          <button onclick="selectGrade(1)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 1</button>
+          <button onclick="selectGrade(2)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 2</button>
+          <button onclick="selectGrade(3)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 3</button>
+          <button onclick="selectGrade(4)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 4</button>
+          <button onclick="selectGrade(5)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 5</button>
+          <button onclick="selectGrade(6)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 6</button>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-bold text-amber-400 mb-3">2. Pilih 4 Siswa yang Maju ke Depan</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- P1 -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-red-500/30 space-y-2">
+            <span class="text-xs font-bold text-red-400">PEMAIN 1 (ZONA MERAH)</span>
+            <select id="p1Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-red-500 focus:outline-none"></select>
+          </div>
+          <!-- P2 -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-blue-500/30 space-y-2">
+            <span class="text-xs font-bold text-blue-400">PEMAIN 2 (ZONA BIRU)</span>
+            <select id="p2Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-blue-500 focus:outline-none"></select>
+          </div>
+          <!-- P3 -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-emerald-500/30 space-y-2">
+            <span class="text-xs font-bold text-emerald-400">PEMAIN 3 (ZONA HIJAU)</span>
+            <select id="p3Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"></select>
+          </div>
+          <!-- P4 -->
+          <div class="bg-slate-800/60 p-4 rounded-xl border border-amber-500/30 space-y-2">
+            <span class="text-xs font-bold text-amber-400">PEMAIN 4 (ZONA KUNING)</span>
+            <select id="p4Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-amber-500 focus:outline-none"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 flex justify-end">
+        <button onclick="startMatch()" class="bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-extrabold px-8 py-3.5 rounded-xl shadow-lg text-lg transform transition hover:scale-105">
+          MULAI PERTANDINGAN 4 PEMAIN &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- ARENA 4 PEMAIN -->
+    <section id="arenaPanel" class="hidden space-y-4">
+      <div class="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800">
+        <div>
+          <span class="text-xs text-slate-400">SOAL KE</span>
+          <div id="questionNum" class="text-xl font-bold text-amber-400">1 / 5</div>
+        </div>
+        <div class="text-center">
+          <span class="text-xs text-slate-400">WAKTU TERSISA</span>
+          <div id="timerDisplay" class="text-3xl font-black text-red-500 animate-pulse">15s</div>
+        </div>
+        <button onclick="abortMatch()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg text-slate-300">Keluar Match</button>
+      </div>
+
+      <!-- TAMPILAN SOAL UTAMA -->
+      <div class="bg-slate-900 p-6 rounded-2xl border border-amber-500/30 text-center shadow-xl">
+        <h3 id="questionText" class="text-xl md:text-2xl font-black text-white">Soal akan muncul di sini...</h3>
+      </div>
+
+      <!-- 4 ZONA PEMAIN -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- PLAYER 1 -->
+        <div class="p1-card bg-slate-900 rounded-xl p-4 border-2 border-red-500/40 space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span id="p1Name" class="font-bold text-red-400">Pemain 1</span>
+            <span id="p1Score" class="font-extrabold bg-red-950/80 px-3 py-1 rounded border border-red-800 text-red-200">Skor: 0</span>
+          </div>
+          <div id="p1Opts" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <!-- PLAYER 2 -->
+        <div class="p2-card bg-slate-900 rounded-xl p-4 border-2 border-blue-500/40 space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span id="p2Name" class="font-bold text-blue-400">Pemain 2</span>
+            <span id="p2Score" class="font-extrabold bg-blue-950/80 px-3 py-1 rounded border border-blue-800 text-blue-200">Skor: 0</span>
+          </div>
+          <div id="p2Opts" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <!-- PLAYER 3 -->
+        <div class="p3-card bg-slate-900 rounded-xl p-4 border-2 border-emerald-500/40 space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span id="p3Name" class="font-bold text-emerald-400">Pemain 3</span>
+            <span id="p3Score" class="font-extrabold bg-emerald-950/80 px-3 py-1 rounded border border-emerald-800 text-emerald-200">Skor: 0</span>
+          </div>
+          <div id="p3Opts" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <!-- PLAYER 4 -->
+        <div class="p4-card bg-slate-900 rounded-xl p-4 border-2 border-amber-500/40 space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span id="p4Name" class="font-bold text-amber-400">Pemain 4</span>
+            <span id="p4Score" class="font-extrabold bg-amber-950/80 px-3 py-1 rounded border border-amber-800 text-amber-200">Skor: 0</span>
+          </div>
+          <div id="p4Opts" class="grid grid-cols-2 gap-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REKAP REKAPITULASI SESI (HASIL AKHIR) -->
+    <section id="resultPanel" class="hidden bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-6">
+      <div class="text-center space-y-2">
+        <h2 class="text-3xl font-black text-amber-400">HASIL PERTANDINGAN</h2>
+        <p class="text-xs text-slate-400">Skor telah dikirim otomatis ke Google Sheet "Nilai"</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="leaderboardGrid"></div>
+
+      <div class="flex justify-center pt-4">
+        <button onclick="resetToSetup()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-8 py-3 rounded-xl">
+          Sesi Berikutnya (4 Siswa Baru) &rarr;
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // BANK SOAL TERSTRUKTUR KELAS 1 - 6
+    const QUESTION_BANK = {
+      1: [
+        { q: "Hari Pahlawan diperingati setiap tanggal?", opts: ["10 November", "17 Agustus", "25 Desember", "1 Mei"], a: 0 },
+        { q: "Warna bendera negara Indonesia adalah?", opts: ["Merah Putih", "Hijau Kuning", "Biru Putih", "Merah Hitam"], a: 0 },
+        { q: "Pahlawan yang memimpin pertempuran Surabaya adalah?", opts: ["Bung Tomo", "Ir. Soekarno", "R.A. Kartini", "Jenderal Sudirman"], a: 0 }
+      ],
+      2: [
+        { q: "Pahlawan wanita yang memperjuangkan hak pendidikan wanita adalah?", opts: ["R.A. Kartini", "Cut Nyak Dien", "Dewi Sartika", "Fatmawati"], a: 0 },
+        { q: "Kota yang dijuluki Kota Pahlawan adalah?", opts: ["Surabaya", "Jakarta", "Bandung", "Semarang"], a: 0 },
+        { q: "Bung Tomo membakar semangat pemuda dengan seruan?", opts: ["Merdeka atau Mati!", "Maju Terus!", "Pantang Menyerah!", "Bersatu Kita Teguh!"], a: 0 }
+      ],
+      3: [
+        { q: "Pahlawan dari Maluku yang bergambar di uang Rp 1.000 (kertas lama) adalah?", opts: ["Pattimura", "Pangeran Diponegoro", "Tuanku Imam Bonjol", "Sisingamangaraja"], a: 0 },
+        { q: "Pahlawan nasional yang merumuskan teks proklamasi bersama Soekarno adalah?", opts: ["Moh. Hatta", "Bung Tomo", "Sutan Sjahrir", "Tan Malaka"], a: 0 },
+        { q: "Senjata tradisional rakyat Indonesia saat melawan penjajah adalah?", opts: ["Bambu Runcing", "Keris", "Rencong", "Mandau"], a: 0 }
+      ],
+      4: [
+        { q: "Pertempuran Ambarawa dipimpin oleh sosok jenderal besar yaitu?", opts: ["Jenderal Sudirman", "Jenderal Ahmad Yani", "Jenderal Gatot Subroto", "Jenderal Nasution"], a: 0 },
+        { q: "Pahlawan dari Aceh yang memimpin Perang Aceh adalah?", opts: ["Cut Nyak Dien", "R.A. Kartini", "Nyi Ageng Serang", "Martha Christina Tiahahu"], a: 0 },
+        { q: "Perang Diponegoro terjadi di pulau?", opts: ["Jawa", "Sumatera", "Sulawesi", "Kalimantan"], a: 0 }
+      ],
+      5: [
+        { q: "Organisasi pergerakan nasional pertama yang berdiri tahun 1908 adalah?", opts: ["Budi Utomo", "Sikat Islam", "Indische Partij", "PNI"], a: 0 },
+        { q: "Pengibaran bendera Merah Putih pertama saat Proklamasi disebarkan oleh?", opts: ["Latief Hendraningrat & Suhud", "Bung Tomo", "Sayuti Melik", "Chaerul Saleh"], a: 0 },
+        { q: "Tokoh yang mengetik teks Proklamasi Kemerdekaan Indonesia adalah?", opts: ["Sayuti Melik", "Sukarni", "B.M. Diah", "Wikana"], a: 0 }
+      ],
+      6: [
+        { q: "Peristiwa Insiden Hotel Yamato di Surabaya dipicu oleh aksi tentara Belanda yaitu?", opts: ["Mengibarkan bendera Belanda", "Merobek teks proklamasi", "Menembak pemuda", "Menutup jalan"], a: 0 },
+        { q: "Perjanjian diplomasi pertama antara Indonesia dan Belanda setelah kemerdekaan adalah?", opts: ["Linggarjati", "Renville", "Roem-Royen", "KMB"], a: 0 },
+        { q: "Pahlawan nasional pimpinan Perang Banjar di Kalimantan Selatan adalah?", opts: ["Pangeran Antasari", "Sultan Hasanuddin", "I Gusti Ngurah Rai", "Tuanku Tambusai"], a: 0 }
+      ]
+    };
+
+    // STATE GAME LOKAL
+    let currentGrade = 1;
+    let currentQuestions = [];
+    let currentQIdx = 0;
+    let timerInterval = null;
+    let timeLeft = 15;
+    let elapsedTotalSeconds = 0;
+
+    let players = [
+      { id: 1, name: '', score: 0, answered: false },
+      { id: 2, name: '', score: 0, answered: false },
+      { id: 3, name: '', score: 0, answered: false },
+      { id: 4, name: '', score: 0, answered: false }
+    ];
+
+    let rosterData = {
+      Kelas_1: ["Ahmad", "Budi", "Citra", "Dewi", "Eko"],
+      Kelas_2: ["Fani", "Gani", "Hani", "Indra", "Jaka"],
+      Kelas_3: ["Kiki", "Lala", "Mona", "Niko", "Oki"],
+      Kelas_4: ["Putri", "Qori", "Rian", "Siti", "Tono"],
+      Kelas_5: ["Umar", "Vina", "Wawan", "Xena", "Yoga"],
+      Kelas_6: ["Zahra", "Adit", "Bella", "Candra", "Dion"]
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCachedRoster();
+      selectGrade(1);
+    });
+
+    function loadCachedRoster() {
+      const cached = localStorage.getItem('OFFLINE_ROSTER');
+      if (cached) {
+        try {
+          rosterData = JSON.parse(cached);
+          document.getElementById('syncStatus').innerText = "Database Local Cache Loaded";
+          document.getElementById('syncStatus').className = "text-xs px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800";
+        } catch(e){}
+      }
+    }
+
+    function selectGrade(grade) {
+      currentGrade = grade;
+      document.querySelectorAll('.grade-btn').forEach((btn, idx) => {
+        if ((idx + 1) === grade) {
+          btn.className = "grade-btn border-2 border-amber-400 bg-amber-500/20 text-amber-300 font-bold text-lg p-4 rounded-xl shadow-lg";
+        } else {
+          btn.className = "grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg";
+        }
+      });
+
+      const names = rosterData["Kelas_" + grade] || ["Siswa 1", "Siswa 2", "Siswa 3", "Siswa 4"];
+      for (let p = 1; p <= 4; p++) {
+        const sel = document.getElementById(`p${p}Select`);
+        sel.innerHTML = '';
+        names.forEach((n, idx) => {
+          const opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          if (idx === (p - 1)) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    function startMatch() {
+      players[0].name = document.getElementById('p1Select').value || "Pemain 1";
+      players[1].name = document.getElementById('p2Select').value || "Pemain 2";
+      players[2].name = document.getElementById('p3Select').value || "Pemain 3";
+      players[3].name = document.getElementById('p4Select').value || "Pemain 4";
+
+      players.forEach(p => { p.score = 0; p.answered = false; });
+      currentQuestions = QUESTION_BANK[currentGrade] || QUESTION_BANK[1];
+      currentQIdx = 0;
+      elapsedTotalSeconds = 0;
+
+      document.getElementById('setupPanel').classList.add('hidden');
+      document.getElementById('arenaPanel').classList.remove('hidden');
+
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      if (currentQIdx >= currentQuestions.length) {
+        finishMatch();
+        return;
+      }
+
+      players.forEach(p => {
+        p.answered = false;
+        document.getElementById(`p${p.id}Score`).innerText = `Skor: ${p.score}`;
+      });
+
+      const q = currentQuestions[currentQIdx];
+      document.getElementById('questionNum').innerText = `${currentQIdx + 1} / ${currentQuestions.length}`;
+      document.getElementById('questionText').innerText = q.q;
+
+      for (let p = 1; p <= 4; p++) {
+        document.getElementById(`p${p}Name`).innerText = players[p-1].name;
+        const container = document.getElementById(`p${p}Opts`);
+        container.innerHTML = '';
+
+        q.opts.forEach((optText, optIdx) => {
+          const btn = document.createElement('button');
+          btn.className = `p-${p}-btn w-full bg-slate-800 hover:bg-slate-700 text-left p-3 rounded-lg border border-slate-700 text-sm font-semibold transition`;
+          btn.innerText = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
+          btn.onclick = () => submitAnswer(p, optIdx);
+          container.appendChild(btn);
+        });
+      }
+
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 15;
+      document.getElementById('timerDisplay').innerText = `${timeLeft}s`;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        elapsedTotalSeconds++;
+        document.getElementById('timerDisplay').innerText = `${timeLeft}s`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          nextQuestion();
+        }
+      }, 1000);
+    }
+
+    function submitAnswer(playerNum, choiceIdx) {
+      const p = players[playerNum - 1];
+      if (p.answered) return;
+
+      p.answered = true;
+      const q = currentQuestions[currentQIdx];
+
+      // Disable buttons untuk pemain ini
+      const container = document.getElementById(`p${playerNum}Opts`);
+      const btns = container.querySelectorAll('button');
+      btns.forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === q.a) {
+          btn.className = "w-full bg-emerald-600 text-white p-3 rounded-lg font-bold text-sm";
+        } else if (idx === choiceIdx) {
+          btn.className = "w-full bg-red-600 text-white p-3 rounded-lg font-bold text-sm";
+        } else {
+          btn.className = "w-full bg-slate-800 opacity-40 p-3 rounded-lg text-sm";
+        }
+      });
+
+      if (choiceIdx === q.a) {
+        p.score += 20 + timeLeft; // Bonus kecepatan
+        document.getElementById(`p${playerNum}Score`).innerText = `Skor: ${p.score}`;
+      }
+
+      // Cek apakah semua 4 pemain sudah menjawab
+      if (players.every(pl => pl.answered)) {
+        clearInterval(timerInterval);
+        setTimeout(nextQuestion, 1200);
+      }
+    }
+
+    function nextQuestion() {
+      currentQIdx++;
+      renderQuestion();
+    }
+
+    function abortMatch() {
+      clearInterval(timerInterval);
+      resetToSetup();
+    }
+
+    async function finishMatch() {
+      clearInterval(timerInterval);
+      document.getElementById('arenaPanel').classList.add('hidden');
+      document.getElementById('resultPanel').classList.remove('hidden');
+
+      const grid = document.getElementById('leaderboardGrid');
+      grid.innerHTML = '';
+
+      // Sort Pemenang
+      const sorted = [...players].sort((a, b) => b.score - a.score);
+
+      sorted.forEach((p, rank) => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-800 p-5 rounded-xl border border-slate-700 text-center space-y-2";
+        card.innerHTML = `
+          <div class="text-xs font-bold ${rank === 0 ? 'text-amber-400' : 'text-slate-400'}">JUARA ${rank + 1}</div>
+          <div class="text-lg font-black text-white">${p.name}</div>
+          <div class="text-2xl font-black text-amber-300">${p.score} pts</div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // Kirim Otomatis ke Google Sheet (Nilai)
+      await postScoresToSheet();
+    }
+
+    async function postScoresToSheet() {
+      const url = localStorage.getItem('GAS_API_URL');
+      if (!url) return;
+
+      const payload = {
+        action: "saveScores",
+        data: players.map(p => ({
+          name: p.name,
+          score: p.score,
+          timer: elapsedTotalSeconds,
+          kelas: `Kelas_${currentGrade}`
+        }))
+      };
+
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch(e) {
+        console.error("Gagal posting nilai:", e);
+      }
+    }
+
+    function resetToSetup() {
+      document.getElementById('resultPanel').classList.add('hidden');
+      document.getElementById('arenaPanel').classList.add('hidden');
+      document.getElementById('setupPanel').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
