@@ -3,28 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chronos Village 4D - Isometric RTS Simulator</title>
+    <title>Chronos Village 3D/4D RTS - Three.js Simulator</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
         * {
             user-select: none;
             -webkit-user-select: none;
         }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #090d16;
-            color: #f1f5f9;
-            overflow: hidden;
+        body, html {
             margin: 0;
             padding: 0;
             width: 100vw;
             height: 100vh;
+            overflow: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #050811;
+            color: #f1f5f9;
         }
         .font-orbitron {
             font-family: 'Orbitron', sans-serif;
@@ -34,18 +36,18 @@
             background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
         }
         .glass-btn {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-btn:hover {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
-            border-color: rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+            border-color: rgba(255, 255, 255, 0.35);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
         }
@@ -54,34 +56,19 @@
         }
         .glass-btn.active {
             border-color: #38bdf8;
-            background: rgba(56, 189, 248, 0.25);
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
         }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+        #webgl-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
         }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(56, 189, 248, 0.5);
-            border-radius: 4px;
-        }
-        /* Canvas Styling */
-        #gameCanvas {
-            cursor: grab;
-            display: block;
-            touch-action: none;
-        }
-        #gameCanvas:active {
-            cursor: grabbing;
-        }
-        /* Portal Animation Effect */
         @keyframes chronoGlow {
             0% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
-            50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8), 0 0 50px rgba(56, 189, 248, 0.6); }
+            50% { box-shadow: 0 0 35px rgba(168, 85, 247, 0.8), 0 0 50px rgba(56, 189, 248, 0.6); }
             100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
         }
         .chrono-glow {
@@ -91,8 +78,8 @@
 </head>
 <body class="w-full h-full relative select-none">
 
-    <!-- CANVAS GAME MAIN LAYER -->
-    <canvas id="gameCanvas" class="w-full h-full absolute inset-0 z-0"></canvas>
+    <!-- 3D THREE.JS WEBGL CONTAINER -->
+    <div id="webgl-container"></div>
 
     <!-- UI OVERLAY LAYER -->
     <div id="uiOverlay" class="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-3 md:p-5">
@@ -112,58 +99,53 @@
 
             <!-- Global Resources Display -->
             <div class="glass-panel rounded-2xl px-4 py-2 flex flex-wrap items-center gap-4 md:gap-6 text-sm font-semibold">
-                <!-- Populasi -->
                 <div class="flex items-center gap-2" title="Warga Desa">
                     <i class="fa-solid fa-users text-sky-400"></i>
                     <span id="resPop">5/10</span>
                 </div>
-                <!-- Makanan -->
                 <div class="flex items-center gap-2" title="Stok Makanan">
                     <i class="fa-solid fa-apple-whole text-emerald-400"></i>
                     <span id="resFood">150</span>
                 </div>
-                <!-- Kayu -->
                 <div class="flex items-center gap-2" title="Kayu Konstruksi">
                     <i class="fa-solid fa-tree text-amber-600"></i>
                     <span id="resWood">120</span>
                 </div>
-                <!-- Batu/Mineral -->
                 <div class="flex items-center gap-2" title="Batu & Mineral">
                     <i class="fa-solid fa-cubes text-slate-400"></i>
                     <span id="resStone">80</span>
                 </div>
-                <!-- Energi 4D -->
                 <div class="flex items-center gap-2 bg-purple-950/60 px-3 py-1 rounded-xl border border-purple-500/30 text-purple-300" title="Energi Khusus 4D Chrono">
                     <i class="fa-solid fa-bolt text-purple-400 animate-pulse"></i>
                     <span id="resChrono" class="font-orbitron font-bold">25</span>
                 </div>
             </div>
 
-            <!-- Control Buttons (Sound, Reset, Help) -->
+            <!-- Controls -->
             <div class="flex items-center gap-2">
-                <button id="btnAudio" class="glass-btn w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white">
+                <button id="btnAudio" class="glass-btn w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white" title="Toggle Sound">
                     <i class="fa-solid fa-volume-high"></i>
                 </button>
-                <button id="btnCenter" class="glass-btn w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white" title="Pusatkan Kamera">
+                <button id="btnCenter" class="glass-btn w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white" title="Pusatkan Kamera 3D">
                     <i class="fa-solid fa-crosshairs"></i>
                 </button>
             </div>
         </div>
 
-        <!-- SIDEBAR / FLOATING NOTIFICATIONS -->
+        <!-- SIDEBAR / FLOATING ACTION PANELS -->
         <div class="flex justify-between items-end gap-4 w-full pointer-events-none">
             
-            <!-- LEFT PANEL: Selected Entity Info & Action Panel -->
+            <!-- LEFT PANEL: Selected Entity Info -->
             <div id="selectionPanel" class="glass-panel rounded-2xl p-4 w-72 md:w-80 pointer-events-auto transition-all duration-300 translate-y-full opacity-0">
                 <div class="flex justify-between items-start mb-3 border-b border-slate-700/50 pb-2">
                     <div>
-                        <h3 id="selName" class="font-bold text-base text-white">Warga Desa</h3>
+                        <h3 id="selName" class="font-bold text-base text-white">Warga Desa 3D</h3>
                         <p id="selSub" class="text-xs text-sky-400">Petani (Farmer)</p>
                     </div>
                     <button id="btnCloseSel" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
                 </div>
 
-                <!-- Status Bars for Villager -->
+                <!-- Status Bars -->
                 <div id="selStatsVillager" class="space-y-2 mb-3 text-xs">
                     <div>
                         <div class="flex justify-between text-slate-300 mb-1">
@@ -184,12 +166,12 @@
                         </div>
                     </div>
                     <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
-                        <span>Aktivitas: <strong id="actionText" class="text-white">Mencari Makan</strong></span>
-                        <span>Usia: <strong id="ageText" class="text-white">24th</strong></span>
+                        <span>Aktivitas: <strong id="actionText" class="text-white">Bekerja</strong></span>
+                        <span>Usia: <strong id="ageText" class="text-white">22th</strong></span>
                     </div>
                 </div>
 
-                <!-- Villager Job Assignment Buttons -->
+                <!-- Job Buttons -->
                 <div id="selJobButtons" class="grid grid-cols-2 gap-1.5 pt-1">
                     <button data-job="farmer" class="btnJob glass-btn py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 text-emerald-300">
                         <i class="fa-solid fa-wheat-awn"></i> Petani
@@ -206,10 +188,10 @@
                 </div>
             </div>
 
-            <!-- RIGHT / CENTER BOTTOM: Build & Era Shift Action Bar -->
+            <!-- RIGHT BOTTOM: Construction & 4D Era Shift -->
             <div class="flex flex-col items-end gap-3 pointer-events-auto">
                 
-                <!-- Era Shift 4D Button Panel -->
+                <!-- Era Shift 4D Button -->
                 <div class="glass-panel p-2 rounded-2xl flex items-center gap-2 border-purple-500/40 chrono-glow">
                     <div class="px-2 text-xs font-orbitron font-bold text-purple-400 hidden md:block">
                         <i class="fa-solid fa-clock-rotate-left mr-1"></i> PERGESERAN ERA 4D
@@ -241,7 +223,7 @@
                     <button data-build="chrono_extractor" class="btnBuild glass-btn p-2.5 rounded-xl flex flex-col items-center gap-1 min-w-[70px] text-xs">
                         <i class="fa-solid fa-atom text-purple-400 text-lg"></i>
                         <span>Ekstraktor 4D</span>
-                        <span class="text-[10px] text-slate-400">80 Stn / 20 Ch</span>
+                        <span class="text-[10px] text-slate-400">80 Stn/20 Ch</span>
                     </button>
                     <div class="h-8 w-px bg-slate-700/60 mx-1"></div>
                     <button id="btnSpawnVillager" class="glass-btn p-2.5 rounded-xl flex flex-col items-center gap-1 min-w-[75px] text-xs text-sky-300">
@@ -257,227 +239,240 @@
 
     </div>
 
-    <!-- NOTIFICATION MESSAGES -->
+    <!-- NOTIFICATION CONTAINER -->
     <div id="toastContainer" class="absolute top-20 right-5 z-20 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- GAME ENGINE JAVASCRIPT -->
+    <!-- 3D ENGINE SCRIPT -->
     <script>
         /**
-         * CHRONOS VILLAGE 4D - Isometric RTS Engine
-         * Rendered in High-DPI Canvas 2D with Vector-based High Precision Isometric Sprites
+         * CHRONOS VILLAGE 3D / 4D RTS ENGINE
+         * Built with Three.js (WebGL), Lighting & Procedural 3D Geometry
          */
 
-        // --- AUDIO SYNTHESIS (Web Audio API) ---
+        // --- AUDIO ENGINE ---
         class SoundEngine {
             constructor() {
                 this.ctx = null;
                 this.muted = false;
             }
-
             init() {
                 if (!this.ctx) {
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 }
             }
-
-            playClick() {
+            playTone(freq, type, duration, vol = 0.1) {
                 if (this.muted || !this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.05);
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e){}
             }
-
-            playBuild() {
-                if (this.muted || !this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-                osc.frequency.setValueAtTime(300, this.ctx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.2);
-            }
-
-            playEraShift() {
-                if (this.muted || !this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.8);
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.8);
-            }
+            playClick() { this.playTone(600, 'sine', 0.05); }
+            playBuild() { this.playTone(220, 'triangle', 0.2); }
+            playEraShift() { this.playTone(800, 'sawtooth', 0.6, 0.15); }
         }
-
         const SFX = new SoundEngine();
 
-        // --- CONSTANTS & CONFIGURATION ---
-        const GRID_SIZE = 24; // 24x24 Map Grid
-        const TILE_WIDTH = 64;  // Isometric Tile Width
-        const TILE_HEIGHT = 32; // Isometric Tile Height
+        // --- GAME CONSTANTS ---
+        const GRID_SIZE = 20;
+        const TILE_SIZE = 4;
+        const MAP_HALF = (GRID_SIZE * TILE_SIZE) / 2;
 
-        // 4D Eras Configuration
         const ERAS = [
-            { id: 1, name: "Era 1: Kuno (Ancient)", color: "#f59e0b", bgTint: "#1e1b18", chronoMult: 1, titleColor: "text-amber-400" },
-            { id: 2, name: "Era 2: Kerajaan (Medieval)", color: "#3b82f6", bgTint: "#131b2e", chronoMult: 1.5, titleColor: "text-blue-400" },
-            { id: 3, name: "Era 3: Modern Industrial", color: "#10b981", bgTint: "#0f231c", chronoMult: 2.2, titleColor: "text-emerald-400" },
-            { id: 4, name: "Era 4: Cyberpunk 4D", color: "#a855f7", bgTint: "#1a0f2e", chronoMult: 3.5, titleColor: "text-purple-400" }
+            { id: 1, name: "Era 1: Kuno (Ancient)", bgTint: 0x090d16, fogColor: 0x090d16, chronoMult: 1, titleColor: "text-amber-400" },
+            { id: 2, name: "Era 2: Kerajaan (Medieval)", bgTint: 0x0c1527, fogColor: 0x0c1527, chronoMult: 1.5, titleColor: "text-blue-400" },
+            { id: 3, name: "Era 3: Modern Industrial", bgTint: 0x081c15, fogColor: 0x081c15, chronoMult: 2.2, titleColor: "text-emerald-400" },
+            { id: 4, name: "Era 4: Cyberpunk 4D", bgTint: 0x160926, fogColor: 0x160926, chronoMult: 3.5, titleColor: "text-purple-400" }
         ];
 
         // --- GAME STATE ---
         const gameState = {
             eraIndex: 0,
-            resources: {
-                food: 200,
-                wood: 150,
-                stone: 100,
-                chrono: 30
-            },
+            resources: { food: 200, wood: 150, stone: 100, chrono: 30 },
             maxPopulation: 10,
-            grid: [], // Map Grid Data
             villagers: [],
             buildings: [],
-            particles: [],
+            grid: [],
             selectedEntity: null,
-            buildingToPlace: null,
-            
-            // Camera Pan & Zoom
-            camera: {
-                x: 0,
-                y: 0,
-                zoom: 1,
-                isDragging: false,
-                dragStart: { x: 0, y: 0 }
-            }
+            buildingToPlace: null
         };
 
-        // Canvas Setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        let dpr = window.devicePixelRatio || 1;
+        // --- THREE.JS SCENE SETUP ---
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(ERAS[0].bgTint);
+        scene.fog = new THREE.FogExp2(ERAS[0].fogColor, 0.008);
 
-        function resizeCanvas() {
-            dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
-            ctx.scale(dpr, dpr);
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 45, 55);
+        camera.lookAt(0, 0, 0);
 
-        // --- MAP GENERATION ---
-        function initGrid() {
-            gameState.grid = [];
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfffaed, 0.9);
+        dirLight.position.set(40, 60, 30);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 150;
+        dirLight.shadow.camera.left = -50;
+        dirLight.shadow.camera.right = 50;
+        dirLight.shadow.camera.top = 50;
+        dirLight.shadow.camera.bottom = -50;
+        scene.add(dirLight);
+
+        // Raycasting for Mouse Interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Hover Placement Marker
+        const previewGeo = new THREE.BoxGeometry(TILE_SIZE, 0.2, TILE_SIZE);
+        const previewMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5 });
+        const placementPreview = new THREE.Mesh(previewGeo, previewMat);
+        placementPreview.visible = false;
+        scene.add(placementPreview);
+
+        // --- TERRAIN GENERATION ---
+        let terrainMesh;
+        function createTerrain() {
+            // Ground Island
+            const groundGeo = new THREE.BoxGeometry(GRID_SIZE * TILE_SIZE, 2, GRID_SIZE * TILE_SIZE);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+            terrainMesh = new THREE.Mesh(groundGeo, groundMat);
+            terrainMesh.position.y = -1;
+            terrainMesh.receiveShadow = true;
+            scene.add(terrainMesh);
+
+            // Water Plane Surrounding
+            const waterGeo = new THREE.PlaneGeometry(300, 300);
+            const waterMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.7 });
+            const water = new THREE.Mesh(waterGeo, waterMat);
+            water.rotation.x = -Math.PI / 2;
+            water.position.y = -2;
+            scene.add(water);
+
+            // Initialize Grid Data
             for (let r = 0; r < GRID_SIZE; r++) {
-                const row = [];
+                gameState.grid[r] = [];
                 for (let c = 0; c < GRID_SIZE; c++) {
+                    const worldX = (c * TILE_SIZE) - MAP_HALF + TILE_SIZE / 2;
+                    const worldZ = (r * TILE_SIZE) - MAP_HALF + TILE_SIZE / 2;
+
                     let type = 'grass';
-                    let resourceAmount = 0;
-
-                    // Random resource deposits
                     const rand = Math.random();
-                    if (rand < 0.08) {
-                        type = 'tree';
-                        resourceAmount = 200;
-                    } else if (rand < 0.12) {
-                        type = 'stone_ore';
-                        resourceAmount = 150;
-                    } else if (rand < 0.14) {
-                        type = 'chrono_crystal';
-                        resourceAmount = 100;
-                    }
+                    if (rand < 0.1) type = 'tree';
+                    else if (rand < 0.14) type = 'stone';
+                    else if (rand < 0.17) type = 'chrono_crystal';
 
-                    row.push({
-                        r, c,
-                        type,
-                        resourceAmount,
-                        building: null
-                    });
+                    gameState.grid[r][c] = { r, c, worldX, worldZ, type, building: null };
+
+                    // Spawn 3D Natural Resource Props
+                    if (type === 'tree') spawnTree3D(worldX, worldZ);
+                    if (type === 'stone') spawnStone3D(worldX, worldZ);
+                    if (type === 'chrono_crystal') spawnCrystal3D(worldX, worldZ);
                 }
-                gameState.grid.push(row);
             }
 
-            // Center Camera
-            gameState.camera.x = window.innerWidth / 2;
-            gameState.camera.y = window.innerHeight / 4;
-
-            // Spawn Initial Balai Desa (Town Hall) at center
-            const centerR = Math.floor(GRID_SIZE / 2);
-            const centerC = Math.floor(GRID_SIZE / 2);
-            createBuilding('townhall', centerR, centerC);
-
-            // Clear resources under Townhall
-            gameState.grid[centerR][centerC].type = 'grass';
-            gameState.grid[centerR+1][centerC].type = 'grass';
-            gameState.grid[centerR][centerC+1].type = 'grass';
-
-            // Spawn Starting Villagers
+            // Spawn Initial Townhall at Center
+            const center = Math.floor(GRID_SIZE / 2);
+            createBuilding('townhall', center, center);
+            
+            // Spawn Starting 3D Villagers
             for (let i = 0; i < 4; i++) {
-                spawnVillager(centerR + (Math.random() > 0.5 ? 1 : -1), centerC + (Math.random() > 0.5 ? 1 : -1));
+                spawnVillager(center + (i % 2 === 0 ? 1 : -1), center + (i > 1 ? 1 : -1));
             }
         }
 
-        // --- ISOMETRIC MATH HELPERS ---
-        function gridToIso(r, c) {
-            const x = (c - r) * (TILE_WIDTH / 2);
-            const y = (c + r) * (TILE_HEIGHT / 2);
-            return { x, y };
+        // --- 3D RESOURCE PROPS ---
+        function spawnTree3D(x, z) {
+            const treeGroup = new THREE.Group();
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
+            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 });
+
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 2, 6), trunkMat);
+            trunk.position.y = 1;
+            trunk.castShadow = true;
+            treeGroup.add(trunk);
+
+            const foliage = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3.5, 6), foliageMat);
+            foliage.position.y = 3;
+            foliage.castShadow = true;
+            treeGroup.add(foliage);
+
+            treeGroup.position.set(x, 0, z);
+            scene.add(treeGroup);
         }
 
-        function isoToGrid(screenX, screenY) {
-            // Adjust screen position relative to camera
-            const relX = (screenX - gameState.camera.x) / gameState.camera.zoom;
-            const relY = (screenY - gameState.camera.y) / gameState.camera.zoom;
-
-            const c = (relX / (TILE_WIDTH / 2) + relY / (TILE_HEIGHT / 2)) / 2;
-            const r = (relY / (TILE_HEIGHT / 2) - relX / (TILE_WIDTH / 2)) / 2;
-            return { r: Math.floor(r), c: Math.floor(c) };
+        function spawnStone3D(x, z) {
+            const stoneMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 });
+            const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.9), stoneMat);
+            stone.position.set(x, 0.6, z);
+            stone.castShadow = true;
+            scene.add(stone);
         }
 
-        // --- VILLAGER ENTITY CLASS ---
-        class Villager {
+        function spawnCrystal3D(x, z) {
+            const cryMat = new THREE.MeshStandardMaterial({ color: 0xc084fc, roughness: 0.2, metalness: 0.8, emissive: 0x6b21a8, emissiveIntensity: 0.5 });
+            const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.8), cryMat);
+            crystal.position.set(x, 1, z);
+            crystal.castShadow = true;
+            scene.add(crystal);
+        }
+
+        // --- 3D VILLAGER CLASS ---
+        class Villager3D {
             constructor(id, r, c) {
                 this.id = id;
-                this.r = r;
-                this.c = c;
-                const pos = gridToIso(r, c);
-                this.x = pos.x;
-                this.y = pos.y;
-                this.targetX = pos.x;
-                this.targetY = pos.y;
-                
+                this.name = ['Budi', 'Arya', 'Siti', 'Dewi', 'Rian', 'Eka', 'Giri', 'Laras'][Math.floor(Math.random() * 8)];
+                this.job = 'farmer';
                 this.hp = 100;
-                this.hunger = 0; // 0 to 100
-                this.age = 18 + Math.floor(Math.random() * 10);
-                this.job = 'farmer'; // farmer, lumberjack, miner, builder
-                this.state = 'idle'; // idle, moving, working
-                this.targetResource = null;
-                
-                this.name = this.generateName();
-                this.speed = 1.2;
-                this.color = '#38bdf8';
-            }
+                this.hunger = 0;
+                this.age = 20 + Math.floor(Math.random() * 10);
+                this.state = 'working';
 
-            generateName() {
-                const names = ['Budi', 'Arya', 'Siti', 'Dewi', 'Rian', 'Eka', 'Giri', 'Laras', 'Tomi', 'Zahra'];
-                return names[Math.floor(Math.random() * names.length)];
+                const cell = gameState.grid[r][c];
+                this.x = cell.worldX;
+                this.z = cell.worldZ;
+                this.targetX = this.x;
+                this.targetZ = this.z;
+
+                // Create 3D Humanoid Mesh Group
+                this.group = new THREE.Group();
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+                const headMat = new THREE.MeshStandardMaterial({ color: 0xffedd5 });
+
+                // Body
+                this.body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.2, 8), bodyMat);
+                this.body.position.y = 0.6;
+                this.body.castShadow = true;
+                this.group.add(this.body);
+
+                // Head
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), headMat);
+                head.position.y = 1.4;
+                head.castShadow = true;
+                this.group.add(head);
+
+                this.group.position.set(this.x, 0, this.z);
+                scene.add(this.group);
             }
 
             update() {
@@ -491,603 +486,280 @@
                     }
                 }
 
-                // Automatic Hunger Satisfaction if Food available
                 if (this.hunger > 50 && gameState.resources.food >= 5) {
                     gameState.resources.food -= 5;
                     this.hunger = Math.max(0, this.hunger - 40);
-                    showToast(`${this.name} telah makan (-5 Food)`, 'info');
                 }
 
-                // AI Movement & Tasks
-                const dist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
-                if (dist > 2) {
-                    this.x += ((this.targetX - this.x) / dist) * this.speed;
-                    this.y += ((this.targetY - this.y) / dist) * this.speed;
-                    this.state = 'moving';
+                // AI Movement
+                const dist = Math.hypot(this.targetX - this.x, this.targetZ - this.z);
+                if (dist > 0.2) {
+                    const speed = 0.08;
+                    this.x += ((this.targetX - this.x) / dist) * speed;
+                    this.z += ((this.targetZ - this.z) / dist) * speed;
+                    this.group.position.set(this.x, 0, this.z);
+                    this.group.rotation.y = Math.atan2(this.targetX - this.x, this.targetZ - this.z);
+                    this.body.rotation.z = Math.sin(Date.now() * 0.01) * 0.1; // Walking bobbing animation
                 } else {
-                    this.state = 'working';
                     this.executeWork();
                 }
             }
 
             executeWork() {
-                // Periodically collect resources based on job
                 if (Math.random() < 0.02) {
-                    const eraMult = ERAS[gameState.eraIndex].chronoMult;
-                    
-                    if (this.job === 'farmer') {
-                        const amount = Math.round(2 * eraMult);
-                        gameState.resources.food += amount;
-                        spawnFloatingText(`+${amount} Food`, this.x, this.y - 20, '#10b981');
-                    } else if (this.job === 'lumberjack') {
-                        const amount = Math.round(2 * eraMult);
-                        gameState.resources.wood += amount;
-                        spawnFloatingText(`+${amount} Wood`, this.x, this.y - 20, '#f59e0b');
-                    } else if (this.job === 'miner') {
-                        const amount = Math.round(1 * eraMult);
-                        gameState.resources.stone += amount;
-                        if (Math.random() < 0.3) {
-                            gameState.resources.chrono += 1;
-                            spawnFloatingText(`+1 Chrono`, this.x, this.y - 30, '#a855f7');
-                        } else {
-                            spawnFloatingText(`+${amount} Stone`, this.x, this.y - 20, '#94a3b8');
-                        }
-                    } else if (this.job === 'builder') {
-                        // Passively repairs or boosts building efficiency
-                        spawnFloatingText(`Building...`, this.x, this.y - 20, '#38bdf8');
+                    const mult = ERAS[gameState.eraIndex].chronoMult;
+                    if (this.job === 'farmer') gameState.resources.food += Math.round(2 * mult);
+                    if (this.job === 'lumberjack') gameState.resources.wood += Math.round(2 * mult);
+                    if (this.job === 'miner') {
+                        gameState.resources.stone += Math.round(1 * mult);
+                        if (Math.random() < 0.3) gameState.resources.chrono += 1;
                     }
 
-                    // Wandering around work zone
-                    const currentGrid = isoToGrid(this.x, this.y);
-                    const nr = Math.max(0, Math.min(GRID_SIZE - 1, currentGrid.r + Math.floor(Math.random() * 3) - 1));
-                    const nc = Math.max(0, Math.min(GRID_SIZE - 1, currentGrid.c + Math.floor(Math.random() * 3) - 1));
-                    const newPos = gridToIso(nr, nc);
-                    this.targetX = newPos.x;
-                    this.targetY = newPos.y;
+                    // Random wander
+                    const offsetX = (Math.random() - 0.5) * 6;
+                    const offsetZ = (Math.random() - 0.5) * 6;
+                    this.targetX = Math.max(-MAP_HALF + 2, Math.min(MAP_HALF - 2, this.x + offsetX));
+                    this.targetZ = Math.max(-MAP_HALF + 2, Math.min(MAP_HALF - 2, this.z + offsetZ));
                 }
             }
 
             die() {
+                scene.remove(this.group);
                 const idx = gameState.villagers.indexOf(this);
-                if (idx !== -1) {
-                    gameState.villagers.splice(idx, 1);
-                    showToast(`${this.name} meninggal karena kelaparan!`, 'error');
-                    if (gameState.selectedEntity === this) {
-                        gameState.selectedEntity = null;
-                        hideSelectionPanel();
-                    }
-                }
-            }
-
-            draw() {
-                // Shadows
-                ctx.beginPath();
-                ctx.ellipse(this.x, this.y + 4, 8, 4, 0, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-                ctx.fill();
-
-                // Villager Body - HD Procedural Isometric Render
-                const era = gameState.eraIndex;
-                ctx.save();
-                ctx.translate(this.x, this.y);
-
-                // Body Aura / Selection Glow
-                if (gameState.selectedEntity === this) {
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, 14, 7, 0, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#38bdf8';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
-
-                // Head & Body Color Based on Era
-                let headColor = '#fde047';
-                let tunicColor = '#0284c7';
-
-                if (era === 1) tunicColor = '#3b82f6'; // Medieval Tunic
-                if (era === 2) tunicColor = '#10b981'; // Modern Clothes
-                if (era === 3) tunicColor = '#c084fc'; // Neon Cyber Suit
-
-                // Torso
-                ctx.fillStyle = tunicColor;
-                ctx.beginPath();
-                ctx.roundRect(-4, -14, 8, 10, 2);
-                ctx.fill();
-
-                // Head
-                ctx.fillStyle = '#ffedd5';
-                ctx.beginPath();
-                ctx.arc(0, -18, 4, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Job Tool Indicator Icon
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '10px FontAwesome';
-                let icon = '🌾';
-                if (this.job === 'lumberjack') icon = '🪓';
-                if (this.job === 'miner') icon = '⛏️';
-                if (this.job === 'builder') icon = '🔨';
-                ctx.fillText(icon, -5, -24);
-
-                ctx.restore();
+                if (idx !== -1) gameState.villagers.splice(idx, 1);
+                showToast(`${this.name} meninggal karena kelaparan!`, 'error');
             }
         }
 
-        // --- BUILDING ENTITY CLASS ---
-        class Building {
+        // --- 3D BUILDING CLASS ---
+        class Building3D {
             constructor(type, r, c) {
-                this.type = type; // townhall, house, farm, lumber, chrono_extractor
+                this.type = type;
                 this.r = r;
                 this.c = c;
-                const pos = gridToIso(r, c);
-                this.x = pos.x;
-                this.y = pos.y;
-                this.level = 1;
+                const cell = gameState.grid[r][c];
+                this.x = cell.worldX;
+                this.z = cell.worldZ;
+
+                this.meshGroup = new THREE.Group();
+                this.buildStructure();
+                this.meshGroup.position.set(this.x, 0, this.z);
+                scene.add(this.meshGroup);
             }
 
-            draw() {
+            buildStructure() {
                 const era = gameState.eraIndex;
-                ctx.save();
-                ctx.translate(this.x, this.y);
+                let matColor = 0xd97706;
+                if (era === 1) matColor = 0x3b82f6;
+                if (era === 2) matColor = 0x10b981;
+                if (era === 3) matColor = 0xa855f7;
 
-                // Highlight Selection
-                if (gameState.selectedEntity === this) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, -TILE_HEIGHT);
-                    ctx.lineTo(TILE_WIDTH / 2, 0);
-                    ctx.lineTo(0, TILE_HEIGHT);
-                    ctx.lineTo(-TILE_WIDTH / 2, 0);
-                    ctx.closePath();
-                    ctx.strokeStyle = '#f59e0b';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
+                const wallMat = new THREE.MeshStandardMaterial({ color: matColor, roughness: 0.5 });
+                const roofMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 });
 
-                // Render Building Procedurally Based on Type & Era
                 if (this.type === 'townhall') {
-                    this.drawTownHall(era);
+                    const base = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.5, 3.2), wallMat);
+                    base.position.y = 1.25;
+                    base.castShadow = true;
+                    base.receiveShadow = true;
+                    this.meshGroup.add(base);
+
+                    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 2, 4), roofMat);
+                    roof.position.y = 3.5;
+                    roof.rotation.y = Math.PI / 4;
+                    roof.castShadow = true;
+                    this.meshGroup.add(roof);
                 } else if (this.type === 'house') {
-                    this.drawHouse(era);
+                    const house = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.8, 2.2), wallMat);
+                    house.position.y = 0.9;
+                    house.castShadow = true;
+                    this.meshGroup.add(house);
                 } else if (this.type === 'farm') {
-                    this.drawFarm(era);
+                    const plotMat = new THREE.MeshStandardMaterial({ color: 0x15803d });
+                    const plot = new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 3), plotMat);
+                    plot.position.y = 0.1;
+                    plot.receiveShadow = true;
+                    this.meshGroup.add(plot);
                 } else if (this.type === 'lumber') {
-                    this.drawLumberCamp(era);
+                    const campMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
+                    const camp = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 1.2, 6), campMat);
+                    camp.position.y = 0.6;
+                    this.meshGroup.add(camp);
                 } else if (this.type === 'chrono_extractor') {
-                    this.drawExtractor(era);
-                }
-
-                ctx.restore();
-            }
-
-            drawTownHall(era) {
-                // Town Hall Isometric Cube Structure
-                const w = TILE_WIDTH * 0.9;
-                const h = 40;
-
-                // Base Wall Color
-                let wallColor = '#d97706';
-                let roofColor = '#b45309';
-
-                if (era === 1) { wallColor = '#475569'; roofColor = '#1e293b'; } // Stone Castle
-                if (era === 2) { wallColor = '#0284c7'; roofColor = '#0369a1'; } // Modern Glass
-                if (era === 3) { wallColor = '#7e22ce'; roofColor = '#581c87'; } // Cyber Citadel
-
-                // Isometric Left Face
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-w / 2, -TILE_HEIGHT / 2);
-                ctx.lineTo(-w / 2, -TILE_HEIGHT / 2 - h);
-                ctx.lineTo(0, -h);
-                ctx.fillStyle = wallColor;
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-                ctx.stroke();
-
-                // Isometric Right Face
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(w / 2, -TILE_HEIGHT / 2);
-                ctx.lineTo(w / 2, -TILE_HEIGHT / 2 - h);
-                ctx.lineTo(0, -h);
-                ctx.fillStyle = roofColor;
-                ctx.fill();
-                ctx.stroke();
-
-                // Roof Roof Pyramid
-                ctx.beginPath();
-                ctx.moveTo(0, -h - 20);
-                ctx.lineTo(-w / 2, -TILE_HEIGHT / 2 - h);
-                ctx.lineTo(0, -h);
-                ctx.lineTo(w / 2, -TILE_HEIGHT / 2 - h);
-                ctx.closePath();
-                ctx.fillStyle = era === 3 ? '#a855f7' : '#f59e0b';
-                ctx.fill();
-
-                // Banner Icon
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px Orbitron';
-                ctx.fillText('4D HQ', -18, -h - 5);
-            }
-
-            drawHouse(era) {
-                const w = TILE_WIDTH * 0.6;
-                const h = 24;
-
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-w / 2, -TILE_HEIGHT / 3);
-                ctx.lineTo(-w / 2, -TILE_HEIGHT / 3 - h);
-                ctx.lineTo(0, -h);
-                ctx.fillStyle = era === 3 ? '#1e1b4b' : '#78350f';
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(w / 2, -TILE_HEIGHT / 3);
-                ctx.lineTo(w / 2, -TILE_HEIGHT / 3 - h);
-                ctx.lineTo(0, -h);
-                ctx.fillStyle = era === 3 ? '#312e81' : '#92400e';
-                ctx.fill();
-
-                // Roof
-                ctx.beginPath();
-                ctx.moveTo(0, -h - 12);
-                ctx.lineTo(-w / 2 - 2, -TILE_HEIGHT / 3 - h);
-                ctx.lineTo(0, -h);
-                ctx.lineTo(w / 2 + 2, -TILE_HEIGHT / 3 - h);
-                ctx.fillStyle = era === 3 ? '#06b6d4' : '#dc2626';
-                ctx.fill();
-            }
-
-            drawFarm(era) {
-                // Flat Agricultural Plot with Crops
-                ctx.beginPath();
-                ctx.moveTo(0, -TILE_HEIGHT / 2);
-                ctx.lineTo(TILE_WIDTH / 2, 0);
-                ctx.lineTo(0, TILE_HEIGHT / 2);
-                ctx.lineTo(-TILE_WIDTH / 2, 0);
-                ctx.closePath();
-                ctx.fillStyle = era === 3 ? '#042f2e' : '#15803d';
-                ctx.fill();
-                ctx.strokeStyle = '#22c55e';
-                ctx.stroke();
-
-                // Crop Lines
-                ctx.fillStyle = era === 3 ? '#22d3ee' : '#facc15';
-                for (let i = -10; i <= 10; i += 6) {
-                    ctx.fillRect(i, -2, 3, 4);
+                    const cryMat = new THREE.MeshStandardMaterial({ color: 0xc084fc, emissive: 0xa855f7, emissiveIntensity: 0.8 });
+                    const core = new THREE.Mesh(new THREE.OctahedronGeometry(1.2), cryMat);
+                    core.position.y = 2;
+                    this.meshGroup.add(core);
                 }
             }
 
-            drawLumberCamp(era) {
-                const w = TILE_WIDTH * 0.5;
-                ctx.fillStyle = '#b45309';
-                ctx.fillRect(-w/4, -15, 10, 15);
-                ctx.fillRect(w/8, -20, 8, 20);
-
-                // Ax icon float
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '12px FontAwesome';
-                ctx.fillText('🪓', -6, -22);
-            }
-
-            drawExtractor(era) {
-                // Futuristic / Magic Chrono Beacon
-                const time = Date.now() * 0.003;
-                const floatY = Math.sin(time) * 5;
-
-                ctx.beginPath();
-                ctx.arc(0, -20 + floatY, 12, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(168, 85, 247, 0.8)';
-                ctx.fill();
-                ctx.strokeStyle = '#c084fc';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Particle Beam
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(0, -40);
-                ctx.strokeStyle = 'rgba(192, 132, 252, 0.5)';
-                ctx.stroke();
+            updateEraStyle() {
+                scene.remove(this.meshGroup);
+                this.meshGroup = new THREE.Group();
+                this.buildStructure();
+                this.meshGroup.position.set(this.x, 0, this.z);
+                scene.add(this.meshGroup);
             }
         }
 
-        // --- SPAWN HELPER FUNCTIONS ---
+        // --- HELPER SPAWN FUNCTIONS ---
         function spawnVillager(r, c) {
             if (gameState.villagers.length >= gameState.maxPopulation) {
-                showToast('Batas maksimum populasi tercapai! Bangun lebih banyak rumah.', 'warning');
+                showToast('Batas populasi tercapai! Bangun lebih banyak Rumah.', 'warning');
                 return;
             }
-            const v = new Villager(Date.now() + Math.random(), r, c);
+            const v = new Villager3D(Date.now(), r, c);
             gameState.villagers.push(v);
-            showToast(`Warga baru (${v.name}) telah bergabung!`, 'success');
+            showToast(`Warga baru (${v.name}) bergabung!`, 'success');
         }
 
         function createBuilding(type, r, c) {
-            // Verify bounds
             if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return false;
-            
             const cell = gameState.grid[r][c];
             if (cell.building) {
-                showToast('Lokasi sudah terisi bangunan!', 'error');
+                showToast('Lokasi ini sudah ada bangunan!', 'error');
                 return false;
             }
 
-            const b = new Building(type, r, c);
+            const b = new Building3D(type, r, c);
             cell.building = b;
             gameState.buildings.push(b);
 
-            // Increase Max Pop if House
-            if (type === 'house') {
-                gameState.maxPopulation += 4;
-            }
-
+            if (type === 'house') gameState.maxPopulation += 4;
             SFX.playBuild();
-            spawnParticles(b.x, b.y, '#38bdf8', 12);
             return true;
         }
 
-        // --- PARTICLE EFFECT SYSTEM ---
-        function spawnParticles(x, y, color, count = 8) {
-            for (let i = 0; i < count; i++) {
-                gameState.particles.push({
-                    x, y,
-                    vx: (Math.random() - 0.5) * 3,
-                    vy: (Math.random() - 0.5) * 3 - 1,
-                    alpha: 1,
-                    color,
-                    size: Math.random() * 4 + 2
-                });
-            }
-        }
+        // --- INTERACTION & RAYCASTING ---
+        let isDraggingCam = false;
+        let previousMousePosition = { x: 0, y: 0 };
 
-        function spawnFloatingText(text, x, y, color) {
-            gameState.particles.push({
-                text, x, y,
-                vx: 0,
-                vy: -0.8,
-                alpha: 1,
-                color,
-                isText: true
-            });
-        }
-
-        function updateParticles() {
-            for (let i = gameState.particles.length - 1; i >= 0; i--) {
-                const p = gameState.particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.alpha -= 0.02;
-
-                if (p.alpha <= 0) {
-                    gameState.particles.splice(i, 1);
-                }
-            }
-        }
-
-        function drawParticles() {
-            gameState.particles.forEach(p => {
-                ctx.save();
-                ctx.globalAlpha = p.alpha;
-                if (p.isText) {
-                    ctx.font = 'bold 11px Plus Jakarta Sans';
-                    ctx.fillStyle = p.color;
-                    ctx.fillText(p.text, p.x, p.y);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color;
-                    ctx.fill();
-                }
-                ctx.restore();
-            });
-        }
-
-        // --- MAIN RENDER LOOP ---
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const era = ERAS[gameState.eraIndex];
-
-            // Render World Background Tint
-            ctx.fillStyle = era.bgTint;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Apply Camera Transform
-            ctx.save();
-            ctx.translate(gameState.camera.x, gameState.camera.y);
-            ctx.scale(gameState.camera.zoom, gameState.camera.zoom);
-
-            // 1. DRAW ISOMETRIC GRID TILES
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    const cell = gameState.grid[r][c];
-                    const pos = gridToIso(r, c);
-
-                    ctx.beginPath();
-                    ctx.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
-                    ctx.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
-                    ctx.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
-                    ctx.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
-                    ctx.closePath();
-
-                    // Tile Fill Color based on Type & Era
-                    let tileColor = (r + c) % 2 === 0 ? '#1e293b' : '#0f172a';
-                    if (cell.type === 'grass') {
-                        tileColor = (r + c) % 2 === 0 ? '#15803d' : '#166534';
-                        if (gameState.eraIndex === 3) tileColor = (r + c) % 2 === 0 ? '#0f172a' : '#1e1b4b'; // Cyber tiles
-                    }
-                    
-                    ctx.fillStyle = tileColor;
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-                    ctx.stroke();
-
-                    // Natural Resources Sprites
-                    if (cell.type === 'tree') {
-                        ctx.fillStyle = '#047857';
-                        ctx.beginPath();
-                        ctx.arc(pos.x, pos.y - 12, 10, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.fillStyle = '#78350f';
-                        ctx.fillRect(pos.x - 2, pos.y - 6, 4, 8);
-                    } else if (cell.type === 'stone_ore') {
-                        ctx.fillStyle = '#64748b';
-                        ctx.beginPath();
-                        ctx.arc(pos.x, pos.y - 4, 7, 0, Math.PI * 2);
-                        ctx.fill();
-                    } else if (cell.type === 'chrono_crystal') {
-                        ctx.fillStyle = '#c084fc';
-                        ctx.beginPath();
-                        ctx.moveTo(pos.x, pos.y - 16);
-                        ctx.lineTo(pos.x + 6, pos.y - 4);
-                        ctx.lineTo(pos.x, pos.y + 2);
-                        ctx.lineTo(pos.x - 6, pos.y - 4);
-                        ctx.closePath();
-                        ctx.fill();
-                    }
-                }
-            }
-
-            // 2. BUILDINGS RENDER
-            gameState.buildings.forEach(b => b.draw());
-
-            // 3. VILLAGERS RENDER & UPDATE
-            gameState.villagers.forEach(v => {
-                v.update();
-                v.draw();
-            });
-
-            // 4. PARTICLES & FLOATING TEXTS
-            updateParticles();
-            drawParticles();
-
-            // 5. BUILDING PLACEMENT HOVER PREVIEW
-            if (gameState.buildingToPlace) {
-                // Draw Target Isometric Cursor
-                const mouseGrid = isoToGrid(lastMousePos.x, lastMousePos.y);
-                if (mouseGrid.r >= 0 && mouseGrid.r < GRID_SIZE && mouseGrid.c >= 0 && mouseGrid.c < GRID_SIZE) {
-                    const pos = gridToIso(mouseGrid.r, mouseGrid.c);
-                    ctx.beginPath();
-                    ctx.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
-                    ctx.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
-                    ctx.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
-                    ctx.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
-                    ctx.closePath();
-                    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
-                    ctx.fill();
-                    ctx.strokeStyle = '#38bdf8';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
-            }
-
-            ctx.restore();
-
-            // UI Realtime Sync
-            updateUI();
-
-            requestAnimationFrame(render);
-        }
-
-        // --- INTERACTION & EVENT LISTENERS ---
-        let lastMousePos = { x: 0, y: 0 };
-
-        canvas.addEventListener('mousedown', (e) => {
+        window.addEventListener('mousedown', (e) => {
             SFX.init();
-            gameState.camera.isDragging = true;
-            gameState.camera.dragStart = { x: e.clientX - gameState.camera.x, y: e.clientY - gameState.camera.y };
-            lastMousePos = { x: e.clientX, y: e.clientY };
+            if (e.target.closest('#uiOverlay')) return; // Ignore clicks on UI
+            isDraggingCam = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
         window.addEventListener('mousemove', (e) => {
-            lastMousePos = { x: e.clientX, y: e.clientY };
-            if (gameState.camera.isDragging) {
-                gameState.camera.x = e.clientX - gameState.camera.dragStart.x;
-                gameState.camera.y = e.clientY - gameState.camera.dragStart.y;
+            // Update Raycaster for Hovering Tile
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(terrainMesh);
+
+            if (intersects.length > 0 && gameState.buildingToPlace) {
+                const point = intersects[0].point;
+                const c = Math.floor((point.x + MAP_HALF) / TILE_SIZE);
+                const r = Math.floor((point.z + MAP_HALF) / TILE_SIZE);
+
+                if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+                    const worldX = (c * TILE_SIZE) - MAP_HALF + TILE_SIZE / 2;
+                    const worldZ = (r * TILE_SIZE) - MAP_HALF + TILE_SIZE / 2;
+                    placementPreview.position.set(worldX, 0.2, worldZ);
+                    placementPreview.visible = true;
+                }
+            } else {
+                placementPreview.visible = false;
+            }
+
+            // Orbit Camera Dragging
+            if (isDraggingCam) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                camera.position.x -= deltaX * 0.1;
+                camera.position.z -= deltaY * 0.1;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
             }
         });
 
         window.addEventListener('mouseup', (e) => {
-            const dragDistance = Math.hypot(e.clientX - (gameState.camera.dragStart.x + gameState.camera.x), e.clientY - (gameState.camera.dragStart.y + gameState.camera.y));
-            gameState.camera.isDragging = false;
+            isDraggingCam = false;
+        });
 
-            // Handle Click / Selection if not panning
-            if (dragDistance < 5) {
-                handleCanvasClick(e.clientX, e.clientY);
+        window.addEventListener('click', (e) => {
+            if (e.target.closest('#uiOverlay')) return;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(terrainMesh);
+
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+                const c = Math.floor((point.x + MAP_HALF) / TILE_SIZE);
+                const r = Math.floor((point.z + MAP_HALF) / TILE_SIZE);
+
+                if (gameState.buildingToPlace) {
+                    const costs = {
+                        house: { wood: 50, stone: 0, chrono: 0 },
+                        farm: { wood: 40, stone: 0, chrono: 0 },
+                        lumber: { wood: 60, stone: 10, chrono: 0 },
+                        chrono_extractor: { wood: 0, stone: 80, chrono: 20 }
+                    };
+                    const cost = costs[gameState.buildingToPlace];
+                    if (gameState.resources.wood >= cost.wood && gameState.resources.stone >= cost.stone && gameState.resources.chrono >= cost.chrono) {
+                        if (createBuilding(gameState.buildingToPlace, r, c)) {
+                            gameState.resources.wood -= cost.wood;
+                            gameState.resources.stone -= cost.stone;
+                            gameState.resources.chrono -= cost.chrono;
+                        }
+                    } else {
+                        showToast('Sumber daya tidak mencukupi!', 'error');
+                    }
+                    gameState.buildingToPlace = null;
+                    placementPreview.visible = false;
+                    document.querySelectorAll('.btnBuild').forEach(b => b.classList.remove('active'));
+                    return;
+                }
+
+                // Check selection of Villagers
+                const cell = gameState.grid[r]?.[c];
+                const clickedVillager = gameState.villagers.find(v => Math.hypot(v.x - cell?.worldX, v.z - cell?.worldZ) < 2);
+                if (clickedVillager) {
+                    gameState.selectedEntity = clickedVillager;
+                    showSelectionPanel(clickedVillager);
+                    SFX.playClick();
+                } else {
+                    gameState.selectedEntity = null;
+                    hideSelectionPanel();
+                }
             }
         });
 
-        // Zoom Control via Mouse Wheel
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-            gameState.camera.zoom = Math.max(0.6, Math.min(2.2, gameState.camera.zoom * zoomFactor));
-        }, { passive: false });
+        // Zoom via Scroll
+        window.addEventListener('wheel', (e) => {
+            camera.position.y = Math.max(15, Math.min(90, camera.position.y + e.deltaY * 0.05));
+        });
 
-        function handleCanvasClick(screenX, screenY) {
-            const gridPos = isoToGrid(screenX, screenY);
-            const { r, c } = gridPos;
+        // --- ANIMATION / RENDER LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
 
-            // Placing Building Mode
-            if (gameState.buildingToPlace) {
-                const costs = {
-                    house: { wood: 50, stone: 0, chrono: 0 },
-                    farm: { wood: 40, stone: 0, chrono: 0 },
-                    lumber: { wood: 60, stone: 10, chrono: 0 },
-                    chrono_extractor: { wood: 0, stone: 80, chrono: 20 }
-                };
+            // Update Villagers 3D
+            gameState.villagers.forEach(v => v.update());
 
-                const cost = costs[gameState.buildingToPlace];
-                if (gameState.resources.wood >= cost.wood && gameState.resources.stone >= cost.stone && gameState.resources.chrono >= cost.chrono) {
-                    if (createBuilding(gameState.buildingToPlace, r, c)) {
-                        gameState.resources.wood -= cost.wood;
-                        gameState.resources.stone -= cost.stone;
-                        gameState.resources.chrono -= cost.chrono;
-                        showToast(`Bangunan ${gameState.buildingToPlace} berhasil dibuat!`, 'success');
-                    }
-                } else {
-                    showToast('Sumber daya tidak mencukupi!', 'error');
+            // Rotate Extractor core crystals
+            gameState.buildings.forEach(b => {
+                if (b.type === 'chrono_extractor' && b.meshGroup.children[0]) {
+                    b.meshGroup.children[0].rotation.y += 0.03;
                 }
-
-                gameState.buildingToPlace = null;
-                document.querySelectorAll('.btnBuild').forEach(b => b.classList.remove('active'));
-                return;
-            }
-
-            // Entity Selection Logic
-            // 1. Check Villager Selection
-            const isoPos = gridToIso(r, c);
-            let clickedVillager = gameState.villagers.find(v => {
-                const dist = Math.hypot(v.x - isoPos.x, v.y - isoPos.y);
-                return dist < 20;
             });
 
-            if (clickedVillager) {
-                gameState.selectedEntity = clickedVillager;
-                showSelectionPanel(clickedVillager);
-                SFX.playClick();
-                return;
-            }
+            // Sync HUD Stats
+            updateUI();
 
-            // 2. Check Building Selection
-            if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
-                const cell = gameState.grid[r][c];
-                if (cell.building) {
-                    gameState.selectedEntity = cell.building;
-                    showSelectionPanel(cell.building);
-                    SFX.playClick();
-                    return;
-                }
-            }
-
-            // Clicked Empty Tile
-            gameState.selectedEntity = null;
-            hideSelectionPanel();
+            renderer.render(scene, camera);
         }
 
-        // --- UI SYNC & CONTROL PANELS ---
+        // Responsive Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- UI & CONTROL BINDINGS ---
         function updateUI() {
             document.getElementById('resPop').innerText = `${gameState.villagers.length}/${gameState.maxPopulation}`;
             document.getElementById('resFood').innerText = Math.floor(gameState.resources.food);
@@ -1095,67 +767,52 @@
             document.getElementById('resStone').innerText = Math.floor(gameState.resources.stone);
             document.getElementById('resChrono').innerText = Math.floor(gameState.resources.chrono);
 
-            // Update Selected Villager Details
-            if (gameState.selectedEntity && gameState.selectedEntity instanceof Villager) {
+            if (gameState.selectedEntity && gameState.selectedEntity instanceof Villager3D) {
                 const v = gameState.selectedEntity;
                 document.getElementById('hpBar').style.width = `${v.hp}%`;
                 document.getElementById('hpText').innerText = `${Math.ceil(v.hp)}/100`;
                 document.getElementById('hungerBar').style.width = `${v.hunger}%`;
                 document.getElementById('hungerText').innerText = `${Math.floor(v.hunger)}%`;
-                document.getElementById('actionText').innerText = v.state;
-                document.getElementById('ageText').innerText = `${v.age}th`;
             }
         }
 
         function showSelectionPanel(entity) {
             const panel = document.getElementById('selectionPanel');
             panel.classList.remove('translate-y-full', 'opacity-0');
-
-            if (entity instanceof Villager) {
-                document.getElementById('selName').innerText = entity.name;
-                document.getElementById('selSub').innerText = `Pekerjaan: ${entity.job.toUpperCase()}`;
-                document.getElementById('selStatsVillager').classList.remove('hidden');
-                document.getElementById('selJobButtons').classList.remove('hidden');
-            } else if (entity instanceof Building) {
-                document.getElementById('selName').innerText = `Bangunan: ${entity.type.toUpperCase()}`;
-                document.getElementById('selSub').innerText = `Level ${entity.level}`;
-                document.getElementById('selStatsVillager').classList.add('hidden');
-                document.getElementById('selJobButtons').classList.add('hidden');
-            }
+            document.getElementById('selName').innerText = entity.name;
+            document.getElementById('selSub').innerText = `Pekerjaan: ${entity.job.toUpperCase()}`;
         }
 
         function hideSelectionPanel() {
-            const panel = document.getElementById('selectionPanel');
-            panel.classList.add('translate-y-full', 'opacity-0');
+            document.getElementById('selectionPanel').classList.add('translate-y-full', 'opacity-0');
         }
 
         document.getElementById('btnCloseSel').addEventListener('click', hideSelectionPanel);
 
-        // Job Change Event Listener
+        // Job Selector Buttons
         document.querySelectorAll('.btnJob').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const job = e.currentTarget.getAttribute('data-job');
-                if (gameState.selectedEntity && gameState.selectedEntity instanceof Villager) {
+                if (gameState.selectedEntity && gameState.selectedEntity instanceof Villager3D) {
                     gameState.selectedEntity.job = job;
-                    showToast(`Pekerjaan ${gameState.selectedEntity.name} diubah menjadi ${job}`, 'info');
+                    showToast(`Pekerjaan ${gameState.selectedEntity.name} diubah ke ${job}`, 'info');
                     showSelectionPanel(gameState.selectedEntity);
                     SFX.playClick();
                 }
             });
         });
 
-        // Building Select Event Listeners
+        // Build Buttons
         document.querySelectorAll('.btnBuild').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const type = e.currentTarget.getAttribute('data-build');
+                document.querySelectorAll('.btnBuild').forEach(b => b.classList.remove('active'));
                 if (gameState.buildingToPlace === type) {
                     gameState.buildingToPlace = null;
-                    e.currentTarget.classList.remove('active');
                 } else {
-                    document.querySelectorAll('.btnBuild').forEach(b => b.classList.remove('active'));
                     gameState.buildingToPlace = type;
                     e.currentTarget.classList.add('active');
-                    showToast(`Pilih lokasi grid untuk membangun ${type}`, 'info');
+                    showToast(`Klik pada tanah 3D untuk menempatkan ${type}`, 'info');
                 }
                 SFX.playClick();
             });
@@ -1165,43 +822,42 @@
         document.getElementById('btnSpawnVillager').addEventListener('click', () => {
             if (gameState.resources.food >= 50) {
                 gameState.resources.food -= 50;
-                const centerR = Math.floor(GRID_SIZE / 2);
-                const centerC = Math.floor(GRID_SIZE / 2);
-                spawnVillager(centerR + 1, centerC + 1);
+                const center = Math.floor(GRID_SIZE / 2);
+                spawnVillager(center + 1, center + 1);
                 SFX.playClick();
             } else {
                 showToast('Makanan tidak cukup (Butuh 50 Food)!', 'error');
             }
         });
 
-        // 4D ERA SHIFT MECHANIC
+        // 4D ERA SHIFT BUTTON
         document.getElementById('btnShiftEra').addEventListener('click', () => {
-            const cost = 100;
-            if (gameState.resources.chrono >= cost) {
-                gameState.resources.chrono -= cost;
+            if (gameState.resources.chrono >= 100) {
+                gameState.resources.chrono -= 100;
                 gameState.eraIndex = (gameState.eraIndex + 1) % ERAS.length;
-                
                 const currentEra = ERAS[gameState.eraIndex];
-                
-                // Update Badge UI
+
+                // Change 3D Environment Background & Fog
+                scene.background.setHex(currentEra.bgTint);
+                scene.fog.color.setHex(currentEra.fogColor);
+
+                // Update 3D Building Models Style
+                gameState.buildings.forEach(b => b.updateEraStyle());
+
                 document.getElementById('eraTitle').innerText = currentEra.name;
                 document.getElementById('eraTitle').className = `text-lg font-bold font-orbitron tracking-wider ${currentEra.titleColor}`;
-                
+
                 SFX.playEraShift();
-                showToast(`DIMENSI 4D BERGESER: Selamat datang di ${currentEra.name}!`, 'success');
-                
-                // Portal Particle Burst
-                spawnParticles(window.innerWidth/2, window.innerHeight/2, currentEra.color, 40);
+                showToast(`DIMENSI 4D BERGESER: ${currentEra.name}!`, 'success');
             } else {
-                showToast(`Energi Chrono 4D tidak cukup! Butuh ${cost} Chrono Energy.`, 'error');
+                showToast('Energi Chrono 4D tidak cukup (Butuh 100 Chrono)!', 'error');
             }
         });
 
-        // Center Camera Button
+        // Center Camera
         document.getElementById('btnCenter').addEventListener('click', () => {
-            gameState.camera.x = window.innerWidth / 2;
-            gameState.camera.y = window.innerHeight / 4;
-            gameState.camera.zoom = 1;
+            camera.position.set(0, 45, 55);
+            camera.lookAt(0, 0, 0);
             SFX.playClick();
         });
 
@@ -1211,11 +867,10 @@
             e.currentTarget.innerHTML = SFX.muted ? '<i class="fa-solid fa-volume-xmark text-red-400"></i>' : '<i class="fa-solid fa-volume-high"></i>';
         });
 
-        // TOAST NOTIFICATIONS SYSTEM
+        // Toast Helper
         function showToast(msg, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            
             let bg = 'bg-slate-900/90 border-slate-700 text-slate-200';
             if (type === 'success') bg = 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200';
             if (type === 'error') bg = 'bg-rose-950/90 border-rose-500/50 text-rose-200';
@@ -1225,24 +880,16 @@
             toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${msg}</span>`;
 
             container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.remove('translate-x-10', 'opacity-0');
-            }, 10);
-
+            setTimeout(() => toast.classList.remove('translate-x-10', 'opacity-0'), 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-x-10');
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
         }
 
-        // --- INIT & RUN ---
-        window.onload = () => {
-            initGrid();
-            requestAnimationFrame(render);
-            showToast('Selamat datang di Chronos Village 4D! Kumpulkan Chrono Energy untuk melompati era.', 'success');
-        };
-
+        // Initialize World
+        createTerrain();
+        animate();
     </script>
 </body>
 </html>
