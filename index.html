@@ -1,452 +1,1248 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Turnamen Hari Pahlawan SD</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @keyframes pulse-fast {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-    .animate-pulse-fast { animation: pulse-fast 0.8s infinite; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chronos Village 4D - Isometric RTS Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #090d16;
+            color: #f1f5f9;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* Custom UI Glassmorphism */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+        .glass-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .glass-btn:active {
+            transform: translateY(0);
+        }
+        .glass-btn.active {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.25);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.5);
+            border-radius: 4px;
+        }
+        /* Canvas Styling */
+        #gameCanvas {
+            cursor: grab;
+            display: block;
+            touch-action: none;
+        }
+        #gameCanvas:active {
+            cursor: grabbing;
+        }
+        /* Portal Animation Effect */
+        @keyframes chronoGlow {
+            0% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8), 0 0 50px rgba(56, 189, 248, 0.6); }
+            100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+        }
+        .chrono-glow {
+            animation: chronoGlow 3s infinite ease-in-out;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-white font-sans min-h-screen overflow-x-hidden select-none">
+<body class="w-full h-full relative select-none">
 
-  <!-- TOP BAR -->
-  <header class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center">
-    <div class="flex items-center space-x-3">
-      <div class="bg-red-600 text-white font-black px-3 py-1 rounded text-lg shadow-lg border border-red-400">10 NOV</div>
-      <h1 class="text-lg font-extrabold tracking-wide text-amber-400">ARENA KUIS HARI PAHLAWAN</h1>
-    </div>
-    <div class="flex items-center gap-3">
-      <span id="syncStatus" class="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline Mode</span>
-      <a href="admin.html" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-600 text-amber-300">⚙ Admin Setup</a>
-    </div>
-  </header>
+    <!-- CANVAS GAME MAIN LAYER -->
+    <canvas id="gameCanvas" class="w-full h-full absolute inset-0 z-0"></canvas>
 
-  <main class="p-4 max-w-[1600px] mx-auto">
-    <!-- PANEL SELEKSI KELAS & PEMAIN -->
-    <section id="setupPanel" class="bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-6 shadow-2xl">
-      <div>
-        <h2 class="text-lg font-bold text-amber-400 mb-3">1. Pilih Tingkat Kelas</h2>
-        <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
-          <button onclick="selectGrade(1)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 1</button>
-          <button onclick="selectGrade(2)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 2</button>
-          <button onclick="selectGrade(3)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 3</button>
-          <button onclick="selectGrade(4)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 4</button>
-          <button onclick="selectGrade(5)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 5</button>
-          <button onclick="selectGrade(6)" class="grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg">Kelas 6</button>
-        </div>
-      </div>
-
-      <div>
-        <h2 class="text-lg font-bold text-amber-400 mb-3">2. Pilih 4 Siswa yang Maju ke Depan</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- P1 MERAH -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-red-500/40 space-y-2">
-            <span class="text-xs font-bold text-red-400">PEMAIN 1 (MERAH)</span>
-            <select id="p1Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-red-500 focus:outline-none"></select>
-          </div>
-          <!-- P2 BIRU -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-blue-500/40 space-y-2">
-            <span class="text-xs font-bold text-blue-400">PEMAIN 2 (BIRU)</span>
-            <select id="p2Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-blue-500 focus:outline-none"></select>
-          </div>
-          <!-- P3 HIJAU -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-emerald-500/40 space-y-2">
-            <span class="text-xs font-bold text-emerald-400">PEMAIN 3 (HIJAU)</span>
-            <select id="p3Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"></select>
-          </div>
-          <!-- P4 KUNING -->
-          <div class="bg-slate-800/60 p-4 rounded-xl border border-amber-500/40 space-y-2">
-            <span class="text-xs font-bold text-amber-400">PEMAIN 4 (KUNING)</span>
-            <select id="p4Select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-semibold focus:border-amber-500 focus:outline-none"></select>
-          </div>
-        </div>
-      </div>
-
-      <div class="pt-4 flex justify-end">
-        <button onclick="startMatch()" class="bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-extrabold px-8 py-3.5 rounded-xl shadow-lg text-lg transform transition hover:scale-105">
-          MULAI PERTANDINGAN 4 PEMAIN &rarr;
-        </button>
-      </div>
-    </section>
-
-    <!-- ARENA 4 PEMAIN (LAYOUT 1 BARIS SEJAJAR: MERAH | BIRU | HIJAU | KUNING) -->
-    <section id="arenaPanel" class="hidden space-y-4">
-      <div class="flex justify-between items-center bg-slate-900 px-6 py-3 rounded-xl border border-slate-800">
-        <div>
-          <span class="text-xs text-slate-400">SOAL KE</span>
-          <div id="questionNum" class="text-xl font-bold text-amber-400">1 / 4</div>
-        </div>
-        <div class="text-center">
-          <span class="text-xs text-slate-400">WAKTU TERSISA</span>
-          <div id="timerDisplay" class="text-3xl font-black text-red-500 animate-pulse">15s</div>
-        </div>
-        <button onclick="abortMatch()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg text-slate-300">Keluar Match</button>
-      </div>
-
-      <!-- TAMPILAN SOAL UTAMA -->
-      <div class="bg-slate-900 p-5 rounded-2xl border border-amber-500/30 text-center shadow-xl">
-        <h3 id="questionText" class="text-xl md:text-2xl font-black text-white">Soal akan muncul di sini...</h3>
-      </div>
-
-      <!-- 4 ZONA PEMAIN SEJAJAR 1 BARIS -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <!-- UI OVERLAY LAYER -->
+    <div id="uiOverlay" class="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-3 md:p-5">
         
-        <!-- PLAYER 1 (MERAH) -->
-        <div class="bg-slate-900 rounded-xl p-3 border-2 border-red-500/50 space-y-3 flex flex-col justify-between">
-          <div class="flex justify-between items-center border-b border-red-900/40 pb-2">
-            <span id="p1Name" class="font-bold text-red-400 truncate max-w-[110px]">Pemain 1</span>
-            <span id="p1Score" class="font-extrabold bg-red-950/80 px-2 py-0.5 rounded border border-red-800 text-xs text-red-200">Skor: 0</span>
-          </div>
-          <div id="p1Opts" class="flex flex-col gap-2"></div>
+        <!-- HEADER / TOP BAR -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pointer-events-auto">
+            <!-- Era & Dimension Badge -->
+            <div class="glass-panel rounded-2xl px-4 py-2.5 flex items-center gap-3">
+                <div id="eraIcon" class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xl shadow-lg shadow-amber-500/30">
+                    <i class="fa-solid fa-campground"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Dimensi 4D Aktif</div>
+                    <div id="eraTitle" class="text-lg font-bold font-orbitron tracking-wider text-amber-400">Era 1: Kuno (Ancient)</div>
+                </div>
+            </div>
+
+            <!-- Global Resources Display -->
+            <div class="glass-panel rounded-2xl px-4 py-2 flex flex-wrap items-center gap-4 md:gap-6 text-sm font-semibold">
+                <!-- Populasi -->
+                <div class="flex items-center gap-2" title="Warga Desa">
+                    <i class="fa-solid fa-users text-sky-400"></i>
+                    <span id="resPop">5/10</span>
+                </div>
+                <!-- Makanan -->
+                <div class="flex items-center gap-2" title="Stok Makanan">
+                    <i class="fa-solid fa-apple-whole text-emerald-400"></i>
+                    <span id="resFood">150</span>
+                </div>
+                <!-- Kayu -->
+                <div class="flex items-center gap-2" title="Kayu Konstruksi">
+                    <i class="fa-solid fa-tree text-amber-600"></i>
+                    <span id="resWood">120</span>
+                </div>
+                <!-- Batu/Mineral -->
+                <div class="flex items-center gap-2" title="Batu & Mineral">
+                    <i class="fa-solid fa-cubes text-slate-400"></i>
+                    <span id="resStone">80</span>
+                </div>
+                <!-- Energi 4D -->
+                <div class="flex items-center gap-2 bg-purple-950/60 px-3 py-1 rounded-xl border border-purple-500/30 text-purple-300" title="Energi Khusus 4D Chrono">
+                    <i class="fa-solid fa-bolt text-purple-400 animate-pulse"></i>
+                    <span id="resChrono" class="font-orbitron font-bold">25</span>
+                </div>
+            </div>
+
+            <!-- Control Buttons (Sound, Reset, Help) -->
+            <div class="flex items-center gap-2">
+                <button id="btnAudio" class="glass-btn w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="btnCenter" class="glass-btn w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white" title="Pusatkan Kamera">
+                    <i class="fa-solid fa-crosshairs"></i>
+                </button>
+            </div>
         </div>
 
-        <!-- PLAYER 2 (BIRU) -->
-        <div class="bg-slate-900 rounded-xl p-3 border-2 border-blue-500/50 space-y-3 flex flex-col justify-between">
-          <div class="flex justify-between items-center border-b border-blue-900/40 pb-2">
-            <span id="p2Name" class="font-bold text-blue-400 truncate max-w-[110px]">Pemain 2</span>
-            <span id="p2Score" class="font-extrabold bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800 text-xs text-blue-200">Skor: 0</span>
-          </div>
-          <div id="p2Opts" class="flex flex-col gap-2"></div>
+        <!-- SIDEBAR / FLOATING NOTIFICATIONS -->
+        <div class="flex justify-between items-end gap-4 w-full pointer-events-none">
+            
+            <!-- LEFT PANEL: Selected Entity Info & Action Panel -->
+            <div id="selectionPanel" class="glass-panel rounded-2xl p-4 w-72 md:w-80 pointer-events-auto transition-all duration-300 translate-y-full opacity-0">
+                <div class="flex justify-between items-start mb-3 border-b border-slate-700/50 pb-2">
+                    <div>
+                        <h3 id="selName" class="font-bold text-base text-white">Warga Desa</h3>
+                        <p id="selSub" class="text-xs text-sky-400">Petani (Farmer)</p>
+                    </div>
+                    <button id="btnCloseSel" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <!-- Status Bars for Villager -->
+                <div id="selStatsVillager" class="space-y-2 mb-3 text-xs">
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1">
+                            <span>Kesehatan</span>
+                            <span id="hpText">100/100</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div id="hpBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1">
+                            <span>Tingkat Kelaparan</span>
+                            <span id="hungerText">0%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div id="hungerBar" class="h-full bg-amber-500 transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+                        <span>Aktivitas: <strong id="actionText" class="text-white">Mencari Makan</strong></span>
+                        <span>Usia: <strong id="ageText" class="text-white">24th</strong></span>
+                    </div>
+                </div>
+
+                <!-- Villager Job Assignment Buttons -->
+                <div id="selJobButtons" class="grid grid-cols-2 gap-1.5 pt-1">
+                    <button data-job="farmer" class="btnJob glass-btn py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 text-emerald-300">
+                        <i class="fa-solid fa-wheat-awn"></i> Petani
+                    </button>
+                    <button data-job="lumberjack" class="btnJob glass-btn py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 text-amber-400">
+                        <i class="fa-solid fa-axe"></i> Penebang
+                    </button>
+                    <button data-job="miner" class="btnJob glass-btn py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 text-purple-300">
+                        <i class="fa-solid fa-pickaxe"></i> Penambang
+                    </button>
+                    <button data-job="builder" class="btnJob glass-btn py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 text-sky-300">
+                        <i class="fa-solid fa-hammer"></i> Pembangun
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT / CENTER BOTTOM: Build & Era Shift Action Bar -->
+            <div class="flex flex-col items-end gap-3 pointer-events-auto">
+                
+                <!-- Era Shift 4D Button Panel -->
+                <div class="glass-panel p-2 rounded-2xl flex items-center gap-2 border-purple-500/40 chrono-glow">
+                    <div class="px-2 text-xs font-orbitron font-bold text-purple-400 hidden md:block">
+                        <i class="fa-solid fa-clock-rotate-left mr-1"></i> PERGESERAN ERA 4D
+                    </div>
+                    <button id="btnShiftEra" class="glass-btn px-4 py-2 rounded-xl text-xs font-orbitron font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+                        <span>LOMPAT KE ERA BERIKUTNYA</span>
+                        <span class="bg-purple-950 px-2 py-0.5 rounded text-[10px] text-purple-300 border border-purple-400/30">100 Chrono</span>
+                    </button>
+                </div>
+
+                <!-- Construction Bar -->
+                <div class="glass-panel p-2 rounded-2xl flex items-center gap-2 max-w-full overflow-x-auto">
+                    <button data-build="house" class="btnBuild glass-btn p-2.5 rounded-xl flex flex-col items-center gap-1 min-w-[70px] text-xs">
+                        <i class="fa-solid fa-house-chimney text-amber-400 text-lg"></i>
+                        <span>Rumah</span>
+                        <span class="text-[10px] text-slate-400">50 Wood</span>
+                    </button>
+                    <button data-build="farm" class="btnBuild glass-btn p-2.5 rounded-xl flex flex-col items-center gap-1 min-w-[70px] text-xs">
+                        <i class="fa-solid fa-wheat-field text-emerald-400 text-lg"></i>
+                        <span>Kebun</span>
+                        <span class="text-[10px] text-slate-400">40 Wood</span>
+                    </button>
+                    <button data-build="lumber" class="btnBuild glass-btn p-2.5 rounded-xl flex flex-col items-center gap-1 min-w-[70px] text-xs">
+                        <i class="fa-solid fa-campground text-orange-400 text-lg"></i>
+                        <span>Kamp Kayu</span>
+                        <span class="text-[10px] text-slate-400">60 Wood</span>
+                    </button>
+                    <button data-build="chrono_extractor" class="btnBuild glass-btn p-2.5 rounded-xl flex flex-col items-center gap-1 min-w-[70px] text-xs">
+                        <i class="fa-solid fa-atom text-purple-400 text-lg"></i>
+                        <span>Ekstraktor 4D</span>
+                        <span class="text-[10px] text-slate-400">80 Stn / 20 Ch</span>
+                    </button>
+                    <div class="h-8 w-px bg-slate-700/60 mx-1"></div>
+                    <button id="btnSpawnVillager" class="glass-btn p-2.5 rounded-xl flex flex-col items-center gap-1 min-w-[75px] text-xs text-sky-300">
+                        <i class="fa-solid fa-user-plus text-lg"></i>
+                        <span>+ Warga</span>
+                        <span class="text-[10px] text-slate-400">50 Food</span>
+                    </button>
+                </div>
+
+            </div>
+
         </div>
 
-        <!-- PLAYER 3 (HIJAU) -->
-        <div class="bg-slate-900 rounded-xl p-3 border-2 border-emerald-500/50 space-y-3 flex flex-col justify-between">
-          <div class="flex justify-between items-center border-b border-emerald-900/40 pb-2">
-            <span id="p3Name" class="font-bold text-emerald-400 truncate max-w-[110px]">Pemain 3</span>
-            <span id="p3Score" class="font-extrabold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 text-xs text-emerald-200">Skor: 0</span>
-          </div>
-          <div id="p3Opts" class="flex flex-col gap-2"></div>
-        </div>
+    </div>
 
-        <!-- PLAYER 4 (KUNING) -->
-        <div class="bg-slate-900 rounded-xl p-3 border-2 border-amber-500/50 space-y-3 flex flex-col justify-between">
-          <div class="flex justify-between items-center border-b border-amber-900/40 pb-2">
-            <span id="p4Name" class="font-bold text-amber-400 truncate max-w-[110px]">Pemain 4</span>
-            <span id="p4Score" class="font-extrabold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800 text-xs text-amber-200">Skor: 0</span>
-          </div>
-          <div id="p4Opts" class="flex flex-col gap-2"></div>
-        </div>
+    <!-- NOTIFICATION MESSAGES -->
+    <div id="toastContainer" class="absolute top-20 right-5 z-20 flex flex-col gap-2 pointer-events-none"></div>
 
-      </div>
-    </section>
+    <!-- GAME ENGINE JAVASCRIPT -->
+    <script>
+        /**
+         * CHRONOS VILLAGE 4D - Isometric RTS Engine
+         * Rendered in High-DPI Canvas 2D with Vector-based High Precision Isometric Sprites
+         */
 
-    <!-- REKAP HASIL AKHIR SESI -->
-    <section id="resultPanel" class="hidden bg-slate-900 rounded-2xl border border-slate-800 p-6 space-y-6">
-      <div class="text-center space-y-2">
-        <h2 class="text-3xl font-black text-amber-400">HASIL PERTANDINGAN</h2>
-        <p class="text-xs text-slate-400">Skor telah tersimpan otomatis ke Google Sheet "Nilai"</p>
-      </div>
+        // --- AUDIO SYNTHESIS (Web Audio API) ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="leaderboardGrid"></div>
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
 
-      <div class="flex justify-center pt-4">
-        <button onclick="resetToSetup()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-8 py-3 rounded-xl">
-          Sesi Berikutnya (4 Siswa Baru) &rarr;
-        </button>
-      </div>
-    </section>
-  </main>
+            playClick() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
 
-  <script>
-    // BANK SOAL (4 SOAL PER KELAS)
-    const QUESTION_BANK = {
-      1: [
-        { q: "Hari Pahlawan diperingati setiap tanggal?", opts: ["10 November", "17 Agustus", "25 Desember", "1 Mei"], a: "10 November" },
-        { q: "Warna bendera negara Indonesia adalah?", opts: ["Merah Putih", "Hijau Kuning", "Biru Putih", "Merah Hitam"], a: "Merah Putih" },
-        { q: "Tokoh pemuda pembakar semangat rakyat Surabaya adalah?", opts: ["Bung Tomo", "Ir. Soekarno", "R.A. Kartini", "Jenderal Sudirman"], a: "Bung Tomo" },
-        { q: "Sikap yang menyerminkan seorang pahlawan adalah?", opts: ["Suka Menolong", "Suka Berkelahi", "Malas Belajar", "Pemberani tapi Jahat"], a: "Suka Menolong" }
-      ],
-      2: [
-        { q: "Pahlawan wanita yang memperjuangkan pendidikan wanita adalah?", opts: ["R.A. Kartini", "Cut Nyak Dien", "Dewi Sartika", "Fatmawati"], a: "R.A. Kartini" },
-        { q: "Kota yang dijuluki sebagai Kota Pahlawan adalah?", opts: ["Surabaya", "Jakarta", "Bandung", "Semarang"], a: "Surabaya" },
-        { q: "Bung Tomo membakar semangat pemuda dengan seruan?", opts: ["Merdeka atau Mati!", "Maju Terus!", "Pantang Menyerah!", "Bersatu Kita Teguh!"], a: "Merdeka atau Mati!" },
-        { q: "Lagu nasional untuk mengenang pahlawan yang gugur adalah?", opts: ["Gugur Bunga", "Indonesia Raya", "Garuda Pancasila", "Halo-Halo Bandung"], a: "Gugur Bunga" }
-      ],
-      3: [
-        { q: "Pahlawan dari Maluku yang terdapat pada uang kertas Rp 1.000 (lama) adalah?", opts: ["Pattimura", "Pangeran Diponegoro", "Tuanku Imam Bonjol", "Sisingamangaraja"], a: "Pattimura" },
-        { q: "Pahlawan nasional yang mendampingi Soekarno membaca Proklamasi adalah?", opts: ["Moh. Hatta", "Bung Tomo", "Sutan Sjahrir", "Tan Malaka"], a: "Moh. Hatta" },
-        { q: "Senjata sederhana khas perjuangan rakyat Indonesia adalah?", opts: ["Bambu Runcing", "Keris", "Rencong", "Mandau"], a: "Bambu Runcing" },
-        { q: "Monumen terkenal di Jakarta untuk mengenang perjuangan kemerdekaan adalah?", opts: ["Monas", "Tugu Muda", "Tugu Pahlawan", "Jam Gadang"], a: "Monas" }
-      ],
-      4: [
-        { q: "Pertempuran Ambarawa dipimpin oleh sosok pahlawan besar yaitu?", opts: ["Jenderal Sudirman", "Jenderal Ahmad Yani", "Jenderal Gatot Subroto", "Jenderal Nasution"], a: "Jenderal Sudirman" },
-        { q: "Pahlawan wanita tangguh asal Aceh yang memimpin Perang Aceh adalah?", opts: ["Cut Nyak Dien", "R.A. Kartini", "Nyi Ageng Serang", "Martha Christina Tiahahu"], a: "Cut Nyak Dien" },
-        { q: "Perang Diponegoro melawan penjajah Belanda terjadi di pulau?", opts: ["Jawa", "Sumatera", "Sulawesi", "Kalimantan"], a: "Jawa" },
-        { q: "Semboyan Bhinneka Tunggal Ika artinya?", opts: ["Berbeda-beda tetap satu jua", "Bersatu kita teguh", "Pantang menyerah", "Merdeka atau mati"], a: "Berbeda-beda tetap satu jua" }
-      ],
-      5: [
-        { q: "Organisasi pergerakan nasional pertama yang berdiri tahun 1908 adalah?", opts: ["Budi Utomo", "Syarikat Islam", "Indische Partij", "PNI"], a: "Budi Utomo" },
-        { q: "Pengibaran bendera Merah Putih pertama saat Proklamasi dilakukan oleh?", opts: ["Latief Hendraningrat & Suhud", "Bung Tomo", "Sayuti Melik", "Chaerul Saleh"], a: "Latief Hendraningrat & Suhud" },
-        { q: "Tokoh pejuang yang bertugas mengetik teks Proklamasi Kemerdekaan adalah?", opts: ["Sayuti Melik", "Sukarni", "B.M. Diah", "Wikana"], a: "Sayuti Melik" },
-        { q: "Pahlawan bertjuluk 'Ayam Jantan dari Timur' dari Maluku/Sulawesi adalah?", opts: ["Sultan Hasanuddin", "Pattimura", "Pangeran Antasari", "Tuanku Imam Bonjol"], a: "Sultan Hasanuddin" }
-      ],
-      6: [
-        { q: "Peristiwa Insiden Hotel Yamato di Surabaya dipicu oleh aksi Belanda yaitu?", opts: ["Mengibarkan bendera Belanda", "Merobek teks proklamasi", "Menembak pemuda", "Menutup akses jalan"], a: "Mengibarkan bendera Belanda" },
-        { q: "Perjanjian diplomasi pertama antara Indonesia dan Belanda adalah?", opts: ["Linggarjati", "Renville", "Roem-Royen", "KMB"], a: "Linggarjati" },
-        { q: "Pahlawan nasional pimpinan Perang Banjar di Kalimantan Selatan adalah?", opts: ["Pangeran Antasari", "Sultan Hasanuddin", "I Gusti Ngurah Rai", "Tuanku Tambusai"], a: "Pangeran Antasari" },
-        { q: "Pasukan khusus pimpinan I Gusti Ngurah Rai di Bali bernama?", opts: ["Puputan Margarana", "Laskar Rakyat", "PETA", "Heiho"], a: "Puputan Margarana" }
-      ]
-    };
+            playBuild() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
 
-    let currentGrade = 1;
-    let currentQuestions = [];
-    let currentQIdx = 0;
-    let timerInterval = null;
-    let timeLeft = 15;
-    let elapsedTotalSeconds = 0;
-
-    let players = [
-      { id: 1, name: '', score: 0, answered: false, currentShuffledOpts: [] },
-      { id: 2, name: '', score: 0, answered: false, currentShuffledOpts: [] },
-      { id: 3, name: '', score: 0, answered: false, currentShuffledOpts: [] },
-      { id: 4, name: '', score: 0, answered: false, currentShuffledOpts: [] }
-    ];
-
-    let rosterData = { Kelas_1: [], Kelas_2: [], Kelas_3: [], Kelas_4: [], Kelas_5: [], Kelas_6: [] };
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      await fetchRosterFromGoogleSheet();
-      selectGrade(1);
-    });
-
-    async function fetchRosterFromGoogleSheet() {
-      const url = localStorage.getItem('GAS_API_URL');
-      if (!url) {
-        document.getElementById('syncStatus').innerText = "URL GAS Belum Diset";
-        return;
-      }
-      try {
-        const res = await fetch(`${url}?action=getRoster`);
-        const json = await res.json();
-        if (json.status === 'success') {
-          rosterData = json.data;
-          document.getElementById('syncStatus').innerText = "Terhubung & Tersaring (Sheet Nilai)";
-          document.getElementById('syncStatus').className = "text-xs px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800";
+            playEraShift() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.8);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.8);
+            }
         }
-      } catch(e) {
-        console.error("Gagal ambil roster:", e);
-      }
-    }
 
-    function shuffleArray(arr) {
-      let array = [...arr];
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
+        const SFX = new SoundEngine();
 
-    async function selectGrade(grade) {
-      currentGrade = grade;
-      document.querySelectorAll('.grade-btn').forEach((btn, idx) => {
-        if ((idx + 1) === grade) {
-          btn.className = "grade-btn border-2 border-amber-400 bg-amber-500/20 text-amber-300 font-bold text-lg p-4 rounded-xl shadow-lg";
-        } else {
-          btn.className = "grade-btn border-2 border-slate-700 hover:border-amber-400 bg-slate-800 p-4 rounded-xl text-center font-bold text-lg";
+        // --- CONSTANTS & CONFIGURATION ---
+        const GRID_SIZE = 24; // 24x24 Map Grid
+        const TILE_WIDTH = 64;  // Isometric Tile Width
+        const TILE_HEIGHT = 32; // Isometric Tile Height
+
+        // 4D Eras Configuration
+        const ERAS = [
+            { id: 1, name: "Era 1: Kuno (Ancient)", color: "#f59e0b", bgTint: "#1e1b18", chronoMult: 1, titleColor: "text-amber-400" },
+            { id: 2, name: "Era 2: Kerajaan (Medieval)", color: "#3b82f6", bgTint: "#131b2e", chronoMult: 1.5, titleColor: "text-blue-400" },
+            { id: 3, name: "Era 3: Modern Industrial", color: "#10b981", bgTint: "#0f231c", chronoMult: 2.2, titleColor: "text-emerald-400" },
+            { id: 4, name: "Era 4: Cyberpunk 4D", color: "#a855f7", bgTint: "#1a0f2e", chronoMult: 3.5, titleColor: "text-purple-400" }
+        ];
+
+        // --- GAME STATE ---
+        const gameState = {
+            eraIndex: 0,
+            resources: {
+                food: 200,
+                wood: 150,
+                stone: 100,
+                chrono: 30
+            },
+            maxPopulation: 10,
+            grid: [], // Map Grid Data
+            villagers: [],
+            buildings: [],
+            particles: [],
+            selectedEntity: null,
+            buildingToPlace: null,
+            
+            // Camera Pan & Zoom
+            camera: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+                isDragging: false,
+                dragStart: { x: 0, y: 0 }
+            }
+        };
+
+        // Canvas Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let dpr = window.devicePixelRatio || 1;
+
+        function resizeCanvas() {
+            dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            ctx.scale(dpr, dpr);
         }
-      });
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-      // Refresh roster data terbaru agar siswa yang baru masuk sheet Nilai langsung hilang dari pilihan
-      await fetchRosterFromGoogleSheet();
+        // --- MAP GENERATION ---
+        function initGrid() {
+            gameState.grid = [];
+            for (let r = 0; r < GRID_SIZE; r++) {
+                const row = [];
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    let type = 'grass';
+                    let resourceAmount = 0;
 
-      const names = rosterData["Kelas_" + grade] || [];
-      for (let p = 1; p <= 4; p++) {
-        const sel = document.getElementById(`p${p}Select`);
-        sel.innerHTML = '';
-        if (names.length === 0) {
-          const opt = document.createElement('option');
-          opt.value = "";
-          opt.textContent = "Semua siswa sudah selesai bermain!";
-          sel.appendChild(opt);
-        } else {
-          names.forEach((n, idx) => {
-            const opt = document.createElement('option');
-            opt.value = n;
-            opt.textContent = n;
-            if (idx === (p - 1)) opt.selected = true;
-            sel.appendChild(opt);
-          });
+                    // Random resource deposits
+                    const rand = Math.random();
+                    if (rand < 0.08) {
+                        type = 'tree';
+                        resourceAmount = 200;
+                    } else if (rand < 0.12) {
+                        type = 'stone_ore';
+                        resourceAmount = 150;
+                    } else if (rand < 0.14) {
+                        type = 'chrono_crystal';
+                        resourceAmount = 100;
+                    }
+
+                    row.push({
+                        r, c,
+                        type,
+                        resourceAmount,
+                        building: null
+                    });
+                }
+                gameState.grid.push(row);
+            }
+
+            // Center Camera
+            gameState.camera.x = window.innerWidth / 2;
+            gameState.camera.y = window.innerHeight / 4;
+
+            // Spawn Initial Balai Desa (Town Hall) at center
+            const centerR = Math.floor(GRID_SIZE / 2);
+            const centerC = Math.floor(GRID_SIZE / 2);
+            createBuilding('townhall', centerR, centerC);
+
+            // Clear resources under Townhall
+            gameState.grid[centerR][centerC].type = 'grass';
+            gameState.grid[centerR+1][centerC].type = 'grass';
+            gameState.grid[centerR][centerC+1].type = 'grass';
+
+            // Spawn Starting Villagers
+            for (let i = 0; i < 4; i++) {
+                spawnVillager(centerR + (Math.random() > 0.5 ? 1 : -1), centerC + (Math.random() > 0.5 ? 1 : -1));
+            }
         }
-      }
-    }
 
-    function startMatch() {
-      players[0].name = document.getElementById('p1Select').value;
-      players[1].name = document.getElementById('p2Select').value;
-      players[2].name = document.getElementById('p3Select').value;
-      players[3].name = document.getElementById('p4Select').value;
+        // --- ISOMETRIC MATH HELPERS ---
+        function gridToIso(r, c) {
+            const x = (c - r) * (TILE_WIDTH / 2);
+            const y = (c + r) * (TILE_HEIGHT / 2);
+            return { x, y };
+        }
 
-      if (!players[0].name || players[0].name.includes("selesai")) {
-        alert("Pilih siswa yang valid terlebih dahulu!");
-        return;
-      }
+        function isoToGrid(screenX, screenY) {
+            // Adjust screen position relative to camera
+            const relX = (screenX - gameState.camera.x) / gameState.camera.zoom;
+            const relY = (screenY - gameState.camera.y) / gameState.camera.zoom;
 
-      players.forEach(p => { p.score = 0; p.answered = false; });
-      currentQuestions = QUESTION_BANK[currentGrade] || QUESTION_BANK[1];
-      currentQIdx = 0;
-      elapsedTotalSeconds = 0;
+            const c = (relX / (TILE_WIDTH / 2) + relY / (TILE_HEIGHT / 2)) / 2;
+            const r = (relY / (TILE_HEIGHT / 2) - relX / (TILE_WIDTH / 2)) / 2;
+            return { r: Math.floor(r), c: Math.floor(c) };
+        }
 
-      document.getElementById('setupPanel').classList.add('hidden');
-      document.getElementById('arenaPanel').classList.remove('hidden');
+        // --- VILLAGER ENTITY CLASS ---
+        class Villager {
+            constructor(id, r, c) {
+                this.id = id;
+                this.r = r;
+                this.c = c;
+                const pos = gridToIso(r, c);
+                this.x = pos.x;
+                this.y = pos.y;
+                this.targetX = pos.x;
+                this.targetY = pos.y;
+                
+                this.hp = 100;
+                this.hunger = 0; // 0 to 100
+                this.age = 18 + Math.floor(Math.random() * 10);
+                this.job = 'farmer'; // farmer, lumberjack, miner, builder
+                this.state = 'idle'; // idle, moving, working
+                this.targetResource = null;
+                
+                this.name = this.generateName();
+                this.speed = 1.2;
+                this.color = '#38bdf8';
+            }
 
-      renderQuestion();
-    }
+            generateName() {
+                const names = ['Budi', 'Arya', 'Siti', 'Dewi', 'Rian', 'Eka', 'Giri', 'Laras', 'Tomi', 'Zahra'];
+                return names[Math.floor(Math.random() * names.length)];
+            }
 
-    function renderQuestion() {
-      if (currentQIdx >= currentQuestions.length) {
-        finishMatch();
-        return;
-      }
+            update() {
+                // Hunger System
+                this.hunger += 0.01;
+                if (this.hunger >= 100) {
+                    this.hp -= 0.05;
+                    if (this.hp <= 0) {
+                        this.die();
+                        return;
+                    }
+                }
 
-      const q = currentQuestions[currentQIdx];
-      document.getElementById('questionNum').innerText = `${currentQIdx + 1} / ${currentQuestions.length}`;
-      document.getElementById('questionText').innerText = q.q;
+                // Automatic Hunger Satisfaction if Food available
+                if (this.hunger > 50 && gameState.resources.food >= 5) {
+                    gameState.resources.food -= 5;
+                    this.hunger = Math.max(0, this.hunger - 40);
+                    showToast(`${this.name} telah makan (-5 Food)`, 'info');
+                }
 
-      players.forEach(p => {
-        p.answered = false;
-        document.getElementById(`p${p.id}Score`).innerText = `Skor: ${p.score}`;
-        
-        p.currentShuffledOpts = shuffleArray(q.opts);
+                // AI Movement & Tasks
+                const dist = Math.hypot(this.targetX - this.x, this.targetY - this.y);
+                if (dist > 2) {
+                    this.x += ((this.targetX - this.x) / dist) * this.speed;
+                    this.y += ((this.targetY - this.y) / dist) * this.speed;
+                    this.state = 'moving';
+                } else {
+                    this.state = 'working';
+                    this.executeWork();
+                }
+            }
 
-        const container = document.getElementById(`p${p.id}Opts`);
-        container.innerHTML = '';
+            executeWork() {
+                // Periodically collect resources based on job
+                if (Math.random() < 0.02) {
+                    const eraMult = ERAS[gameState.eraIndex].chronoMult;
+                    
+                    if (this.job === 'farmer') {
+                        const amount = Math.round(2 * eraMult);
+                        gameState.resources.food += amount;
+                        spawnFloatingText(`+${amount} Food`, this.x, this.y - 20, '#10b981');
+                    } else if (this.job === 'lumberjack') {
+                        const amount = Math.round(2 * eraMult);
+                        gameState.resources.wood += amount;
+                        spawnFloatingText(`+${amount} Wood`, this.x, this.y - 20, '#f59e0b');
+                    } else if (this.job === 'miner') {
+                        const amount = Math.round(1 * eraMult);
+                        gameState.resources.stone += amount;
+                        if (Math.random() < 0.3) {
+                            gameState.resources.chrono += 1;
+                            spawnFloatingText(`+1 Chrono`, this.x, this.y - 30, '#a855f7');
+                        } else {
+                            spawnFloatingText(`+${amount} Stone`, this.x, this.y - 20, '#94a3b8');
+                        }
+                    } else if (this.job === 'builder') {
+                        // Passively repairs or boosts building efficiency
+                        spawnFloatingText(`Building...`, this.x, this.y - 20, '#38bdf8');
+                    }
 
-        p.currentShuffledOpts.forEach((optText, optIdx) => {
-          const btn = document.createElement('button');
-          btn.className = `w-full bg-slate-800 hover:bg-slate-700 text-left p-2.5 rounded-lg border border-slate-700 text-xs font-semibold transition hover:border-amber-400`;
-          btn.innerText = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
-          btn.onclick = () => submitAnswer(p.id, optText, btn);
-          container.appendChild(btn);
+                    // Wandering around work zone
+                    const currentGrid = isoToGrid(this.x, this.y);
+                    const nr = Math.max(0, Math.min(GRID_SIZE - 1, currentGrid.r + Math.floor(Math.random() * 3) - 1));
+                    const nc = Math.max(0, Math.min(GRID_SIZE - 1, currentGrid.c + Math.floor(Math.random() * 3) - 1));
+                    const newPos = gridToIso(nr, nc);
+                    this.targetX = newPos.x;
+                    this.targetY = newPos.y;
+                }
+            }
+
+            die() {
+                const idx = gameState.villagers.indexOf(this);
+                if (idx !== -1) {
+                    gameState.villagers.splice(idx, 1);
+                    showToast(`${this.name} meninggal karena kelaparan!`, 'error');
+                    if (gameState.selectedEntity === this) {
+                        gameState.selectedEntity = null;
+                        hideSelectionPanel();
+                    }
+                }
+            }
+
+            draw() {
+                // Shadows
+                ctx.beginPath();
+                ctx.ellipse(this.x, this.y + 4, 8, 4, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.fill();
+
+                // Villager Body - HD Procedural Isometric Render
+                const era = gameState.eraIndex;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Body Aura / Selection Glow
+                if (gameState.selectedEntity === this) {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 14, 7, 0, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                // Head & Body Color Based on Era
+                let headColor = '#fde047';
+                let tunicColor = '#0284c7';
+
+                if (era === 1) tunicColor = '#3b82f6'; // Medieval Tunic
+                if (era === 2) tunicColor = '#10b981'; // Modern Clothes
+                if (era === 3) tunicColor = '#c084fc'; // Neon Cyber Suit
+
+                // Torso
+                ctx.fillStyle = tunicColor;
+                ctx.beginPath();
+                ctx.roundRect(-4, -14, 8, 10, 2);
+                ctx.fill();
+
+                // Head
+                ctx.fillStyle = '#ffedd5';
+                ctx.beginPath();
+                ctx.arc(0, -18, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Job Tool Indicator Icon
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px FontAwesome';
+                let icon = '🌾';
+                if (this.job === 'lumberjack') icon = '🪓';
+                if (this.job === 'miner') icon = '⛏️';
+                if (this.job === 'builder') icon = '🔨';
+                ctx.fillText(icon, -5, -24);
+
+                ctx.restore();
+            }
+        }
+
+        // --- BUILDING ENTITY CLASS ---
+        class Building {
+            constructor(type, r, c) {
+                this.type = type; // townhall, house, farm, lumber, chrono_extractor
+                this.r = r;
+                this.c = c;
+                const pos = gridToIso(r, c);
+                this.x = pos.x;
+                this.y = pos.y;
+                this.level = 1;
+            }
+
+            draw() {
+                const era = gameState.eraIndex;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Highlight Selection
+                if (gameState.selectedEntity === this) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, -TILE_HEIGHT);
+                    ctx.lineTo(TILE_WIDTH / 2, 0);
+                    ctx.lineTo(0, TILE_HEIGHT);
+                    ctx.lineTo(-TILE_WIDTH / 2, 0);
+                    ctx.closePath();
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                // Render Building Procedurally Based on Type & Era
+                if (this.type === 'townhall') {
+                    this.drawTownHall(era);
+                } else if (this.type === 'house') {
+                    this.drawHouse(era);
+                } else if (this.type === 'farm') {
+                    this.drawFarm(era);
+                } else if (this.type === 'lumber') {
+                    this.drawLumberCamp(era);
+                } else if (this.type === 'chrono_extractor') {
+                    this.drawExtractor(era);
+                }
+
+                ctx.restore();
+            }
+
+            drawTownHall(era) {
+                // Town Hall Isometric Cube Structure
+                const w = TILE_WIDTH * 0.9;
+                const h = 40;
+
+                // Base Wall Color
+                let wallColor = '#d97706';
+                let roofColor = '#b45309';
+
+                if (era === 1) { wallColor = '#475569'; roofColor = '#1e293b'; } // Stone Castle
+                if (era === 2) { wallColor = '#0284c7'; roofColor = '#0369a1'; } // Modern Glass
+                if (era === 3) { wallColor = '#7e22ce'; roofColor = '#581c87'; } // Cyber Citadel
+
+                // Isometric Left Face
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-w / 2, -TILE_HEIGHT / 2);
+                ctx.lineTo(-w / 2, -TILE_HEIGHT / 2 - h);
+                ctx.lineTo(0, -h);
+                ctx.fillStyle = wallColor;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.stroke();
+
+                // Isometric Right Face
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w / 2, -TILE_HEIGHT / 2);
+                ctx.lineTo(w / 2, -TILE_HEIGHT / 2 - h);
+                ctx.lineTo(0, -h);
+                ctx.fillStyle = roofColor;
+                ctx.fill();
+                ctx.stroke();
+
+                // Roof Roof Pyramid
+                ctx.beginPath();
+                ctx.moveTo(0, -h - 20);
+                ctx.lineTo(-w / 2, -TILE_HEIGHT / 2 - h);
+                ctx.lineTo(0, -h);
+                ctx.lineTo(w / 2, -TILE_HEIGHT / 2 - h);
+                ctx.closePath();
+                ctx.fillStyle = era === 3 ? '#a855f7' : '#f59e0b';
+                ctx.fill();
+
+                // Banner Icon
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Orbitron';
+                ctx.fillText('4D HQ', -18, -h - 5);
+            }
+
+            drawHouse(era) {
+                const w = TILE_WIDTH * 0.6;
+                const h = 24;
+
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-w / 2, -TILE_HEIGHT / 3);
+                ctx.lineTo(-w / 2, -TILE_HEIGHT / 3 - h);
+                ctx.lineTo(0, -h);
+                ctx.fillStyle = era === 3 ? '#1e1b4b' : '#78350f';
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w / 2, -TILE_HEIGHT / 3);
+                ctx.lineTo(w / 2, -TILE_HEIGHT / 3 - h);
+                ctx.lineTo(0, -h);
+                ctx.fillStyle = era === 3 ? '#312e81' : '#92400e';
+                ctx.fill();
+
+                // Roof
+                ctx.beginPath();
+                ctx.moveTo(0, -h - 12);
+                ctx.lineTo(-w / 2 - 2, -TILE_HEIGHT / 3 - h);
+                ctx.lineTo(0, -h);
+                ctx.lineTo(w / 2 + 2, -TILE_HEIGHT / 3 - h);
+                ctx.fillStyle = era === 3 ? '#06b6d4' : '#dc2626';
+                ctx.fill();
+            }
+
+            drawFarm(era) {
+                // Flat Agricultural Plot with Crops
+                ctx.beginPath();
+                ctx.moveTo(0, -TILE_HEIGHT / 2);
+                ctx.lineTo(TILE_WIDTH / 2, 0);
+                ctx.lineTo(0, TILE_HEIGHT / 2);
+                ctx.lineTo(-TILE_WIDTH / 2, 0);
+                ctx.closePath();
+                ctx.fillStyle = era === 3 ? '#042f2e' : '#15803d';
+                ctx.fill();
+                ctx.strokeStyle = '#22c55e';
+                ctx.stroke();
+
+                // Crop Lines
+                ctx.fillStyle = era === 3 ? '#22d3ee' : '#facc15';
+                for (let i = -10; i <= 10; i += 6) {
+                    ctx.fillRect(i, -2, 3, 4);
+                }
+            }
+
+            drawLumberCamp(era) {
+                const w = TILE_WIDTH * 0.5;
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(-w/4, -15, 10, 15);
+                ctx.fillRect(w/8, -20, 8, 20);
+
+                // Ax icon float
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px FontAwesome';
+                ctx.fillText('🪓', -6, -22);
+            }
+
+            drawExtractor(era) {
+                // Futuristic / Magic Chrono Beacon
+                const time = Date.now() * 0.003;
+                const floatY = Math.sin(time) * 5;
+
+                ctx.beginPath();
+                ctx.arc(0, -20 + floatY, 12, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.8)';
+                ctx.fill();
+                ctx.strokeStyle = '#c084fc';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Particle Beam
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, -40);
+                ctx.strokeStyle = 'rgba(192, 132, 252, 0.5)';
+                ctx.stroke();
+            }
+        }
+
+        // --- SPAWN HELPER FUNCTIONS ---
+        function spawnVillager(r, c) {
+            if (gameState.villagers.length >= gameState.maxPopulation) {
+                showToast('Batas maksimum populasi tercapai! Bangun lebih banyak rumah.', 'warning');
+                return;
+            }
+            const v = new Villager(Date.now() + Math.random(), r, c);
+            gameState.villagers.push(v);
+            showToast(`Warga baru (${v.name}) telah bergabung!`, 'success');
+        }
+
+        function createBuilding(type, r, c) {
+            // Verify bounds
+            if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return false;
+            
+            const cell = gameState.grid[r][c];
+            if (cell.building) {
+                showToast('Lokasi sudah terisi bangunan!', 'error');
+                return false;
+            }
+
+            const b = new Building(type, r, c);
+            cell.building = b;
+            gameState.buildings.push(b);
+
+            // Increase Max Pop if House
+            if (type === 'house') {
+                gameState.maxPopulation += 4;
+            }
+
+            SFX.playBuild();
+            spawnParticles(b.x, b.y, '#38bdf8', 12);
+            return true;
+        }
+
+        // --- PARTICLE EFFECT SYSTEM ---
+        function spawnParticles(x, y, color, count = 8) {
+            for (let i = 0; i < count; i++) {
+                gameState.particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: (Math.random() - 0.5) * 3 - 1,
+                    alpha: 1,
+                    color,
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+
+        function spawnFloatingText(text, x, y, color) {
+            gameState.particles.push({
+                text, x, y,
+                vx: 0,
+                vy: -0.8,
+                alpha: 1,
+                color,
+                isText: true
+            });
+        }
+
+        function updateParticles() {
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const p = gameState.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+
+                if (p.alpha <= 0) {
+                    gameState.particles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawParticles() {
+            gameState.particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                if (p.isText) {
+                    ctx.font = 'bold 11px Plus Jakarta Sans';
+                    ctx.fillStyle = p.color;
+                    ctx.fillText(p.text, p.x, p.y);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+
+        // --- MAIN RENDER LOOP ---
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const era = ERAS[gameState.eraIndex];
+
+            // Render World Background Tint
+            ctx.fillStyle = era.bgTint;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Apply Camera Transform
+            ctx.save();
+            ctx.translate(gameState.camera.x, gameState.camera.y);
+            ctx.scale(gameState.camera.zoom, gameState.camera.zoom);
+
+            // 1. DRAW ISOMETRIC GRID TILES
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = gameState.grid[r][c];
+                    const pos = gridToIso(r, c);
+
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
+                    ctx.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
+                    ctx.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
+                    ctx.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
+                    ctx.closePath();
+
+                    // Tile Fill Color based on Type & Era
+                    let tileColor = (r + c) % 2 === 0 ? '#1e293b' : '#0f172a';
+                    if (cell.type === 'grass') {
+                        tileColor = (r + c) % 2 === 0 ? '#15803d' : '#166534';
+                        if (gameState.eraIndex === 3) tileColor = (r + c) % 2 === 0 ? '#0f172a' : '#1e1b4b'; // Cyber tiles
+                    }
+                    
+                    ctx.fillStyle = tileColor;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+                    ctx.stroke();
+
+                    // Natural Resources Sprites
+                    if (cell.type === 'tree') {
+                        ctx.fillStyle = '#047857';
+                        ctx.beginPath();
+                        ctx.arc(pos.x, pos.y - 12, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#78350f';
+                        ctx.fillRect(pos.x - 2, pos.y - 6, 4, 8);
+                    } else if (cell.type === 'stone_ore') {
+                        ctx.fillStyle = '#64748b';
+                        ctx.beginPath();
+                        ctx.arc(pos.x, pos.y - 4, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (cell.type === 'chrono_crystal') {
+                        ctx.fillStyle = '#c084fc';
+                        ctx.beginPath();
+                        ctx.moveTo(pos.x, pos.y - 16);
+                        ctx.lineTo(pos.x + 6, pos.y - 4);
+                        ctx.lineTo(pos.x, pos.y + 2);
+                        ctx.lineTo(pos.x - 6, pos.y - 4);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // 2. BUILDINGS RENDER
+            gameState.buildings.forEach(b => b.draw());
+
+            // 3. VILLAGERS RENDER & UPDATE
+            gameState.villagers.forEach(v => {
+                v.update();
+                v.draw();
+            });
+
+            // 4. PARTICLES & FLOATING TEXTS
+            updateParticles();
+            drawParticles();
+
+            // 5. BUILDING PLACEMENT HOVER PREVIEW
+            if (gameState.buildingToPlace) {
+                // Draw Target Isometric Cursor
+                const mouseGrid = isoToGrid(lastMousePos.x, lastMousePos.y);
+                if (mouseGrid.r >= 0 && mouseGrid.r < GRID_SIZE && mouseGrid.c >= 0 && mouseGrid.c < GRID_SIZE) {
+                    const pos = gridToIso(mouseGrid.r, mouseGrid.c);
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y - TILE_HEIGHT / 2);
+                    ctx.lineTo(pos.x + TILE_WIDTH / 2, pos.y);
+                    ctx.lineTo(pos.x, pos.y + TILE_HEIGHT / 2);
+                    ctx.lineTo(pos.x - TILE_WIDTH / 2, pos.y);
+                    ctx.closePath();
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            ctx.restore();
+
+            // UI Realtime Sync
+            updateUI();
+
+            requestAnimationFrame(render);
+        }
+
+        // --- INTERACTION & EVENT LISTENERS ---
+        let lastMousePos = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            SFX.init();
+            gameState.camera.isDragging = true;
+            gameState.camera.dragStart = { x: e.clientX - gameState.camera.x, y: e.clientY - gameState.camera.y };
+            lastMousePos = { x: e.clientX, y: e.clientY };
         });
-      });
 
-      startTimer();
-    }
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      timeLeft = 15;
-      document.getElementById('timerDisplay').innerText = `${timeLeft}s`;
-
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        elapsedTotalSeconds++;
-        document.getElementById('timerDisplay').innerText = `${timeLeft}s`;
-
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          nextQuestion();
-        }
-      }, 1000);
-    }
-
-    function submitAnswer(playerNum, chosenText, clickedBtn) {
-      const p = players[playerNum - 1];
-      if (p.answered) return;
-
-      p.answered = true;
-      const q = currentQuestions[currentQIdx];
-      const isCorrect = (chosenText === q.a);
-
-      const container = document.getElementById(`p${playerNum}Opts`);
-      const btns = container.querySelectorAll('button');
-      
-      btns.forEach((btn, idx) => {
-        btn.disabled = true;
-        const optText = p.currentShuffledOpts[idx];
-        if (optText === q.a) {
-          btn.className = "w-full bg-emerald-600 text-white p-2.5 rounded-lg font-bold text-xs shadow-md border border-emerald-400";
-        } else if (btn === clickedBtn && !isCorrect) {
-          btn.className = "w-full bg-red-600 text-white p-2.5 rounded-lg font-bold text-xs shadow-md border border-red-400";
-        } else {
-          btn.className = "w-full bg-slate-900 opacity-30 p-2.5 rounded-lg text-xs border border-transparent";
-        }
-      });
-
-      if (isCorrect) {
-        p.score += 20 + timeLeft;
-        document.getElementById(`p${playerNum}Score`).innerText = `Skor: ${p.score}`;
-      }
-
-      if (players.every(pl => pl.answered)) {
-        clearInterval(timerInterval);
-        setTimeout(nextQuestion, 1200);
-      }
-    }
-
-    function nextQuestion() {
-      currentQIdx++;
-      renderQuestion();
-    }
-
-    function abortMatch() {
-      clearInterval(timerInterval);
-      resetToSetup();
-    }
-
-    async function finishMatch() {
-      clearInterval(timerInterval);
-      document.getElementById('arenaPanel').classList.add('hidden');
-      document.getElementById('resultPanel').classList.remove('hidden');
-
-      const grid = document.getElementById('leaderboardGrid');
-      grid.innerHTML = '';
-
-      const sorted = [...players].sort((a, b) => b.score - a.score);
-
-      sorted.forEach((p, rank) => {
-        const card = document.createElement('div');
-        card.className = "bg-slate-800 p-5 rounded-xl border border-slate-700 text-center space-y-2 shadow-lg";
-        card.innerHTML = `
-          <div class="text-xs font-bold ${rank === 0 ? 'text-amber-400' : 'text-slate-400'}">JUARA ${rank + 1}</div>
-          <div class="text-lg font-black text-white">${p.name}</div>
-          <div class="text-2xl font-black text-amber-300">${p.score} pts</div>
-        `;
-        grid.appendChild(card);
-      });
-
-      await postScoresToSheet();
-    }
-
-    async function postScoresToSheet() {
-      const url = localStorage.getItem('GAS_API_URL');
-      if (!url) return;
-
-      const payload = {
-        action: "saveScores",
-        data: players.map(p => ({
-          name: p.name,
-          score: p.score,
-          timer: elapsedTotalSeconds,
-          kelas: `Kelas_${currentGrade}`
-        }))
-      };
-
-      try {
-        await fetch(url, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+        window.addEventListener('mousemove', (e) => {
+            lastMousePos = { x: e.clientX, y: e.clientY };
+            if (gameState.camera.isDragging) {
+                gameState.camera.x = e.clientX - gameState.camera.dragStart.x;
+                gameState.camera.y = e.clientY - gameState.camera.dragStart.y;
+            }
         });
-      } catch(e) {
-        console.error("Gagal posting nilai:", e);
-      }
-    }
 
-    async function resetToSetup() {
-      document.getElementById('resultPanel').classList.add('hidden');
-      document.getElementById('arenaPanel').classList.add('hidden');
-      document.getElementById('setupPanel').classList.remove('hidden');
-      await selectGrade(currentGrade);
-    }
-  </script>
+        window.addEventListener('mouseup', (e) => {
+            const dragDistance = Math.hypot(e.clientX - (gameState.camera.dragStart.x + gameState.camera.x), e.clientY - (gameState.camera.dragStart.y + gameState.camera.y));
+            gameState.camera.isDragging = false;
+
+            // Handle Click / Selection if not panning
+            if (dragDistance < 5) {
+                handleCanvasClick(e.clientX, e.clientY);
+            }
+        });
+
+        // Zoom Control via Mouse Wheel
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+            gameState.camera.zoom = Math.max(0.6, Math.min(2.2, gameState.camera.zoom * zoomFactor));
+        }, { passive: false });
+
+        function handleCanvasClick(screenX, screenY) {
+            const gridPos = isoToGrid(screenX, screenY);
+            const { r, c } = gridPos;
+
+            // Placing Building Mode
+            if (gameState.buildingToPlace) {
+                const costs = {
+                    house: { wood: 50, stone: 0, chrono: 0 },
+                    farm: { wood: 40, stone: 0, chrono: 0 },
+                    lumber: { wood: 60, stone: 10, chrono: 0 },
+                    chrono_extractor: { wood: 0, stone: 80, chrono: 20 }
+                };
+
+                const cost = costs[gameState.buildingToPlace];
+                if (gameState.resources.wood >= cost.wood && gameState.resources.stone >= cost.stone && gameState.resources.chrono >= cost.chrono) {
+                    if (createBuilding(gameState.buildingToPlace, r, c)) {
+                        gameState.resources.wood -= cost.wood;
+                        gameState.resources.stone -= cost.stone;
+                        gameState.resources.chrono -= cost.chrono;
+                        showToast(`Bangunan ${gameState.buildingToPlace} berhasil dibuat!`, 'success');
+                    }
+                } else {
+                    showToast('Sumber daya tidak mencukupi!', 'error');
+                }
+
+                gameState.buildingToPlace = null;
+                document.querySelectorAll('.btnBuild').forEach(b => b.classList.remove('active'));
+                return;
+            }
+
+            // Entity Selection Logic
+            // 1. Check Villager Selection
+            const isoPos = gridToIso(r, c);
+            let clickedVillager = gameState.villagers.find(v => {
+                const dist = Math.hypot(v.x - isoPos.x, v.y - isoPos.y);
+                return dist < 20;
+            });
+
+            if (clickedVillager) {
+                gameState.selectedEntity = clickedVillager;
+                showSelectionPanel(clickedVillager);
+                SFX.playClick();
+                return;
+            }
+
+            // 2. Check Building Selection
+            if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+                const cell = gameState.grid[r][c];
+                if (cell.building) {
+                    gameState.selectedEntity = cell.building;
+                    showSelectionPanel(cell.building);
+                    SFX.playClick();
+                    return;
+                }
+            }
+
+            // Clicked Empty Tile
+            gameState.selectedEntity = null;
+            hideSelectionPanel();
+        }
+
+        // --- UI SYNC & CONTROL PANELS ---
+        function updateUI() {
+            document.getElementById('resPop').innerText = `${gameState.villagers.length}/${gameState.maxPopulation}`;
+            document.getElementById('resFood').innerText = Math.floor(gameState.resources.food);
+            document.getElementById('resWood').innerText = Math.floor(gameState.resources.wood);
+            document.getElementById('resStone').innerText = Math.floor(gameState.resources.stone);
+            document.getElementById('resChrono').innerText = Math.floor(gameState.resources.chrono);
+
+            // Update Selected Villager Details
+            if (gameState.selectedEntity && gameState.selectedEntity instanceof Villager) {
+                const v = gameState.selectedEntity;
+                document.getElementById('hpBar').style.width = `${v.hp}%`;
+                document.getElementById('hpText').innerText = `${Math.ceil(v.hp)}/100`;
+                document.getElementById('hungerBar').style.width = `${v.hunger}%`;
+                document.getElementById('hungerText').innerText = `${Math.floor(v.hunger)}%`;
+                document.getElementById('actionText').innerText = v.state;
+                document.getElementById('ageText').innerText = `${v.age}th`;
+            }
+        }
+
+        function showSelectionPanel(entity) {
+            const panel = document.getElementById('selectionPanel');
+            panel.classList.remove('translate-y-full', 'opacity-0');
+
+            if (entity instanceof Villager) {
+                document.getElementById('selName').innerText = entity.name;
+                document.getElementById('selSub').innerText = `Pekerjaan: ${entity.job.toUpperCase()}`;
+                document.getElementById('selStatsVillager').classList.remove('hidden');
+                document.getElementById('selJobButtons').classList.remove('hidden');
+            } else if (entity instanceof Building) {
+                document.getElementById('selName').innerText = `Bangunan: ${entity.type.toUpperCase()}`;
+                document.getElementById('selSub').innerText = `Level ${entity.level}`;
+                document.getElementById('selStatsVillager').classList.add('hidden');
+                document.getElementById('selJobButtons').classList.add('hidden');
+            }
+        }
+
+        function hideSelectionPanel() {
+            const panel = document.getElementById('selectionPanel');
+            panel.classList.add('translate-y-full', 'opacity-0');
+        }
+
+        document.getElementById('btnCloseSel').addEventListener('click', hideSelectionPanel);
+
+        // Job Change Event Listener
+        document.querySelectorAll('.btnJob').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const job = e.currentTarget.getAttribute('data-job');
+                if (gameState.selectedEntity && gameState.selectedEntity instanceof Villager) {
+                    gameState.selectedEntity.job = job;
+                    showToast(`Pekerjaan ${gameState.selectedEntity.name} diubah menjadi ${job}`, 'info');
+                    showSelectionPanel(gameState.selectedEntity);
+                    SFX.playClick();
+                }
+            });
+        });
+
+        // Building Select Event Listeners
+        document.querySelectorAll('.btnBuild').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.currentTarget.getAttribute('data-build');
+                if (gameState.buildingToPlace === type) {
+                    gameState.buildingToPlace = null;
+                    e.currentTarget.classList.remove('active');
+                } else {
+                    document.querySelectorAll('.btnBuild').forEach(b => b.classList.remove('active'));
+                    gameState.buildingToPlace = type;
+                    e.currentTarget.classList.add('active');
+                    showToast(`Pilih lokasi grid untuk membangun ${type}`, 'info');
+                }
+                SFX.playClick();
+            });
+        });
+
+        // Spawn Villager Button
+        document.getElementById('btnSpawnVillager').addEventListener('click', () => {
+            if (gameState.resources.food >= 50) {
+                gameState.resources.food -= 50;
+                const centerR = Math.floor(GRID_SIZE / 2);
+                const centerC = Math.floor(GRID_SIZE / 2);
+                spawnVillager(centerR + 1, centerC + 1);
+                SFX.playClick();
+            } else {
+                showToast('Makanan tidak cukup (Butuh 50 Food)!', 'error');
+            }
+        });
+
+        // 4D ERA SHIFT MECHANIC
+        document.getElementById('btnShiftEra').addEventListener('click', () => {
+            const cost = 100;
+            if (gameState.resources.chrono >= cost) {
+                gameState.resources.chrono -= cost;
+                gameState.eraIndex = (gameState.eraIndex + 1) % ERAS.length;
+                
+                const currentEra = ERAS[gameState.eraIndex];
+                
+                // Update Badge UI
+                document.getElementById('eraTitle').innerText = currentEra.name;
+                document.getElementById('eraTitle').className = `text-lg font-bold font-orbitron tracking-wider ${currentEra.titleColor}`;
+                
+                SFX.playEraShift();
+                showToast(`DIMENSI 4D BERGESER: Selamat datang di ${currentEra.name}!`, 'success');
+                
+                // Portal Particle Burst
+                spawnParticles(window.innerWidth/2, window.innerHeight/2, currentEra.color, 40);
+            } else {
+                showToast(`Energi Chrono 4D tidak cukup! Butuh ${cost} Chrono Energy.`, 'error');
+            }
+        });
+
+        // Center Camera Button
+        document.getElementById('btnCenter').addEventListener('click', () => {
+            gameState.camera.x = window.innerWidth / 2;
+            gameState.camera.y = window.innerHeight / 4;
+            gameState.camera.zoom = 1;
+            SFX.playClick();
+        });
+
+        // Audio Toggle
+        document.getElementById('btnAudio').addEventListener('click', (e) => {
+            SFX.muted = !SFX.muted;
+            e.currentTarget.innerHTML = SFX.muted ? '<i class="fa-solid fa-volume-xmark text-red-400"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+        });
+
+        // TOAST NOTIFICATIONS SYSTEM
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-slate-900/90 border-slate-700 text-slate-200';
+            if (type === 'success') bg = 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200';
+            if (type === 'error') bg = 'bg-rose-950/90 border-rose-500/50 text-rose-200';
+            if (type === 'warning') bg = 'bg-amber-950/90 border-amber-500/50 text-amber-200';
+
+            toast.className = `glass-panel ${bg} border px-3 py-2 rounded-xl text-xs flex items-center gap-2 shadow-lg transition-all duration-300 transform translate-x-10 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${msg}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-10', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-10');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // --- INIT & RUN ---
+        window.onload = () => {
+            initGrid();
+            requestAnimationFrame(render);
+            showToast('Selamat datang di Chronos Village 4D! Kumpulkan Chrono Energy untuk melompati era.', 'success');
+        };
+
+    </script>
 </body>
 </html>
